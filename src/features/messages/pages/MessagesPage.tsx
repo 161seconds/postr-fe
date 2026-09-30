@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Icon from '@/shared/components/Icon'
 import { Avatar } from '@/shared/components/Identity'
 import { people } from '@/features/feed/data/feed-content'
@@ -15,11 +15,22 @@ export default function MessagesPage({ threads, onSend }: { threads: Threads; on
   const [selected, setSelected] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const history = useRef<HTMLDivElement>(null)
+  const messages = selected ? threads[selected] : undefined
+  useEffect(() => {
+    const log = history.current
+    if (!log) return
+    const showLatest = () => { log.scrollTop = log.scrollHeight }
+    showLatest()
+    const observer = new ResizeObserver(showLatest)
+    observer.observe(log)
+    return () => observer.disconnect()
+  }, [selected, messages?.length])
   const person = people.find(item => item.handle === selected)
   const draft = selected ? drafts[selected] ?? '' : ''
   if (person && selected) return <section className="conversation">
     <header className="conversation-header"><button className="icon-button" aria-label="Trở lại hộp thư" onClick={() => setSelected(null)}><Icon name="arrow" /></button><Avatar person={person} /><div><strong>{person.name}</strong><small>{person.handle}</small></div></header>
-    <div className="message-history" role="log" aria-label={`Hội thoại với ${person.name}`}><p className="conversation-date">HÔM NAY · HỘI THOẠI MẪU</p>{threads[selected].map((message, index) => <div className={`message ${message.mine ? 'mine' : ''}`} key={index}><p>{message.copy}</p><small>{message.mine ? 'Bạn · Trong phiên này' : person.name}</small></div>)}</div>
+    <div ref={history} className="message-history" role="log" aria-label={`Hội thoại với ${person.name}`}><p className="conversation-date">HÔM NAY · HỘI THOẠI MẪU</p>{threads[selected].map((message, index) => <div className={`message ${message.mine ? 'mine' : ''}`} key={index}><p>{message.copy}</p><small>{message.mine ? 'Bạn · Trong phiên này' : person.name}</small></div>)}</div>
     <form className="message-form" onSubmit={event => { event.preventDefault(); if (draft.trim()) { onSend(selected, draft.trim()); setDrafts(current => ({ ...current, [selected]: '' })) } }}><textarea aria-label="Nội dung tin nhắn" placeholder="Viết một lời nhắn…" maxLength={1000} rows={2} value={draft} onChange={event => setDrafts(current => ({ ...current, [selected]: event.target.value }))} /><button className="post-button" aria-label="Gửi tin nhắn" disabled={!draft.trim()}><Icon name="send" /></button></form>
     <p className="demo-note">Tin nhắn thử nghiệm, chưa gửi đến người dùng thật.</p>
   </section>

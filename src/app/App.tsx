@@ -31,7 +31,7 @@ export default function App() {
   const [interactions, setInteractions] = useState<Record<PostAction, number[]>>({ like: [], save: [], repost: [] })
   const [followingTab, setFollowingTab] = useState(false)
   const [profileTab, setProfileTab] = useState('Bài đăng')
-  const [query, setQuery] = useState(decodeQuery(parameter))
+  const query = route === 'search' ? decodeQuery(parameter) : ''
   const [topic, setTopic] = useState('Tất cả')
   const [unread, setUnread] = useState(true)
   const [threads, setThreads] = useState(initialThreads)
@@ -39,10 +39,9 @@ export default function App() {
   const dialog = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    setQuery(route === 'search' ? decodeQuery(parameter) : '')
     setTopic('Tất cả')
     window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [route, parameter])
+  }, [route])
 
   useEffect(() => {
     if (!notice) return
@@ -54,6 +53,11 @@ export default function App() {
   const onAction = (id: number, action: PostAction) => setInteractions(current => ({ ...current, [action]: toggleItem(current[action], id) }))
   const onReply = (id: number, copy: string) => setFeed(current => current.map(post => post.id === id ? { ...post, replies: [...post.replies, copy] } : post))
   const ownPosts = feed.filter(post => post.author.handle === profile.handle || interactions.repost.includes(post.id))
+
+  function updateQuery(value: string) {
+    window.history.replaceState(null, '', `#search/${encodeURIComponent(value)}`)
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  }
 
   function publish(copy: string, image?: string) {
     setFeed(current => [{ id: Date.now(), author: profile, time: 'vừa xong', copy, image, topic: 'Đời sống', comments: 0, replies: [], reposts: 0, likes: 0 }, ...current])
@@ -69,9 +73,9 @@ export default function App() {
   }
 
   return <>
-    <SiteLayout route={route} profile={profile} following={following} unread={unread} onFollow={onFollow} onCompose={() => dialog.current?.showModal()}>
+    <SiteLayout route={route} profile={profile} following={following} unread={unread} onFollow={onFollow} onSearch={() => setTopic('Tất cả')} onCompose={() => dialog.current?.showModal()}>
       {route === 'home' && <FeedPage following={followingTab} onTab={setFollowingTab}><Composer person={profile} onPublish={publish} />{renderPosts(followingTab ? feed.filter(post => following.includes(post.author.handle) || post.author.handle === profile.handle) : feed, 'Bảng tin đang chờ những kết nối mới.')}</FeedPage>}
-      {route === 'search' && <ExplorePage query={query} topic={topic} onQuery={setQuery} onTopic={setTopic} following={following} onFollow={onFollow}>{renderPosts(filterPosts(feed, query, topic), 'Không tìm thấy bài đăng.')}</ExplorePage>}
+      {route === 'search' && <ExplorePage query={query} topic={topic} onQuery={updateQuery} onTopic={setTopic} following={following} onFollow={onFollow}>{renderPosts(filterPosts(feed, query, topic), 'Không tìm thấy bài đăng.')}</ExplorePage>}
       {route === 'bookmark' && <><div className="collection-intro"><span className="collection-icon"><Icon name="bookmark" /></span><div><p className="eyebrow">GÓC LƯU GIỮ CỦA RIÊNG BẠN</p><h2>Để dành một chút hay.</h2><p>{interactions.save.length} bài đăng đã lưu · Chỉ mình bạn thấy</p></div></div>{renderPosts(feed.filter(post => interactions.save.includes(post.id)), 'Giữ lại những điều đáng nhớ.')}</>}
       {route === 'bell' && <NotificationsPage unread={unread} onRead={() => setUnread(false)} />}
       {route === 'mail' && <MessagesPage threads={threads} onSend={(handle, copy) => setThreads(current => ({ ...current, [handle]: [...current[handle], { copy, mine: true }] }))} />}
