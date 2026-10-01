@@ -1,4 +1,6 @@
 const icons = {
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></>,
+  moon: <path d="M20.5 13A9 9 0 0 1 11 3.5 9 9 0 1 0 20.5 13Z" />,
   home: <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />,
@@ -22,5 +24,5 @@ const icons = {
 
 export type IconName = keyof typeof icons
 export default function Icon({ name }: { name: IconName }) {
-  return <svg aria-hidden="true" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">{icons[name]}</svg>
+  return <svg className="size-[21px] shrink-0 fill-none stroke-current [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">{icons[name]}</svg>
 }

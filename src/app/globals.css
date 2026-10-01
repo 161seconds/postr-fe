@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-postr-sans), sans-serif;
+  --font-serif: var(--font-postr-serif), Georgia, serif;
+  --color-ink: light-dark(#24221f, #f1eae0);
+  --color-paper: light-dark(#f5f0e8, #171614);
+  --color-card: light-dark(#fffdf8, #211f1c);
+  --color-muted: light-dark(#69635b, #b4aa9d);
+  --color-line: light-dark(#dfd8ce, #39342e);
+  --color-edge: light-dark(#24221f, #62594d);
+  --color-shadow: light-dark(#24221f, #0c0b0a);
+  --color-accent: #ff7048;
+  --color-blue: light-dark(#2466c2, #86b6f6);
+  --color-green: light-dark(#288064, #75c8a4);
+  --color-scrollbar: light-dark(#9a8872, #887661);
+  --color-scrollbar-hover: light-dark(#715f4c, #b6a086);
+  --animate-reveal: reveal .35s both;
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
