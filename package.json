@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types scripts/check-feed.mjs && node scripts/check-theme.mjs && node scripts/check-setup.mjs"
+    "test": "node --experimental-strip-types scripts/check-feed.mjs && node scripts/check-theme.mjs && node scripts/check-setup.mjs && node --experimental-strip-types scripts/check-admin.mjs"
   },
   "dependencies": {
     "next": "^16.3.2",

@@ -36,6 +36,8 @@ Chạy `dotnet run --project Postr.API --urls http://localhost:5000` trong `post
 
 Component React dùng class Tailwind cho bố cục, responsive và trạng thái; không có stylesheet CSS riêng cho component. Dark mode là mặc định; nút sáng/tối lưu lựa chọn trong localStorage. Scrollbar đổi màu theo theme.
 
+Trang quản trị demo tại http://localhost:3000/admin (hoặc /admin/posts), có liên kết "Admin demo" trên bảng tin. Trang hiển thị thống kê bài đăng và tác giả trong bảng tin demo, tìm kiếm, lọc trạng thái, ẩn bài kèm lý do 5–255 ký tự và khôi phục. Kiểm duyệt chỉ mô phỏng trong bộ nhớ trang, không cập nhật backend hoặc bảng tin người dùng; tải lại trang sẽ đặt lại trạng thái. Đây không phải cổng quản trị production và không cấp quyền Admin. Quản trị thật cần đăng nhập, phân quyền Admin ở backend và kết nối API quản trị.
+
 Next.js phục vụ trang gốc; các màn hình tiếp tục dùng hash URL (`#home`, `#search`, `#bell`, `#mail`, `#bookmark`, `#user`, `#post/1`), hỗ trợ Back/Forward và giữ trạng thái phiên khi chuyển màn hình.
 
 Đăng bài, ảnh đính kèm, bình luận, thích, đăng lại, lưu, theo dõi, sửa hồ sơ và hội thoại được lưu qua API C# theo cookie trình duyệt. Tải lại trang giữ dữ liệu. Tin nhắn vẫn là hội thoại mẫu, không gửi đến người thật. Chưa có đăng nhập hoặc đồng bộ giữa nhiều trình duyệt.
