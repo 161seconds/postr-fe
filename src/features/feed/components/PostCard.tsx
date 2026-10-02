@@ -10,7 +10,7 @@ export type PostCardProps = {
   saved: boolean
   reposted: boolean
   onAction: (id: number, action: PostAction) => void
-  onReply: (id: number, copy: string) => void
+  onReply: (id: number, copy: string) => Promise<void>
   onNotice: (message: string) => void
 }
 
@@ -47,7 +47,7 @@ export default function PostCard({ post, liked, saved, reposted, onAction, onRep
       {replying && <section className="replies mt-[10px] pt-[12px] [border-top:1px_solid_var(--color-line)] text-[12px]" aria-label="Bình luận bài đăng">
         {post.replies.length === 0 && <p className="[margin:1em_0] muted text-muted">Chia sẻ góc nhìn của bạn.</p>}
         {post.replies.map((copy, index) => <div className="reply flex items-start gap-[10px] [&_.avatar]:w-[27px] [&_.avatar]:h-[27px] [&_.avatar]:text-[13px] [&_p]:mt-0 [&_p]:leading-[1.7] [&_p]:[overflow-wrap:anywhere]" key={index}><Avatar /><p className="[margin:1em_0]"><strong>Bạn</strong><br />{copy}</p></div>)}
-        <form className="reply-form flex items-center [border:1px_solid_var(--color-line)] rounded-[24px] pl-[12px] [&_input]:w-full [&_input]:[border:0] [&_input]:bg-transparent [&_input]:[padding:10px_0] [&_input]:text-[13px] max-[600px]:[&_input]:text-[16px]" onSubmit={event => { event.preventDefault(); if (reply.trim()) { onReply(post.id, reply.trim()); setReply('') } }}><input className="[font-family:inherit]" aria-label="Nội dung bình luận" placeholder="Viết bình luận…" value={reply} maxLength={280} onChange={event => setReply(event.target.value)} required /><button className="[font-family:inherit] icon-button inline-grid place-items-center [border:0] bg-transparent rounded-full shrink-0 w-[44px] h-[44px] text-blue [&:hover]:bg-[light-dark(#2466c20d,_#86b6f612)]" aria-label="Gửi bình luận" disabled={!reply.trim()}><Icon name="send" /></button></form>
+        <form className="reply-form flex items-center [border:1px_solid_var(--color-line)] rounded-[24px] pl-[12px] [&_input]:w-full [&_input]:[border:0] [&_input]:bg-transparent [&_input]:[padding:10px_0] [&_input]:text-[13px] max-[600px]:[&_input]:text-[16px]" onSubmit={async event => { event.preventDefault(); if (reply.trim()) { try { await onReply(post.id, reply.trim()); setReply('') } catch { return } } }}><input className="[font-family:inherit]" aria-label="Nội dung bình luận" placeholder="Viết bình luận…" value={reply} maxLength={280} onChange={event => setReply(event.target.value)} required /><button className="[font-family:inherit] icon-button inline-grid place-items-center [border:0] bg-transparent rounded-full shrink-0 w-[44px] h-[44px] text-blue [&:hover]:bg-[light-dark(#2466c20d,_#86b6f612)]" aria-label="Gửi bình luận" disabled={!reply.trim()}><Icon name="send" /></button></form>
       </section>}
     </div>
   </article>
