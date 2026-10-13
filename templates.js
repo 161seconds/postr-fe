@@ -1,7 +1,7 @@
 // Static HTML from the original UI; no framework runtime.
 export const templates = {
 shell: `
-<a href="/admin" class="admin-mobile">Admin demo</a>
+<a href="/admin" class="admin-mobile">Quản trị</a>
 <a href="#main-content" class="skip-link fixed left-[16px] top-[-80px] z-[30] p-[15px] bg-card [border:2px_solid_var(--color-edge)] [&amp;:focus]:top-[16px]">Đến nội dung chính</a>
 <div class="shell grid grid-cols-[220px_minmax(0,_600px)_310px] gap-[28px] [width:min(1186px,_calc(100%_-_48px))] [margin:0_auto] max-[1130px]:grid-cols-[74px_minmax(0,_600px)_280px] max-[1130px]:[width:calc(100%_-_40px)] max-[1130px]:gap-[22px] max-[880px]:grid-cols-[74px_minmax(0,_620px)] max-[880px]:[width:min(730px,_100%)] max-[880px]:gap-[16px] max-[600px]:block max-[600px]:w-full">
 <aside class="rail sticky top-0 h-dvh [padding:32px_6px_24px_0] flex flex-col overflow-y-auto [scrollbar-width:none]! [&amp;::-webkit-scrollbar]:hidden max-[1130px]:items-center max-[1130px]:[&amp;_.brand]:ml-0 max-[1130px]:[&amp;_.brand_&gt;_span:last-child]:hidden max-[600px]:hidden" aria-label="Điều hướng chính">
@@ -81,7 +81,7 @@ shell: `
 </svg>
 <span>Đăng bài</span>
 </button>
-<a href="/admin" class="admin-link">Admin demo</a>
+<a href="/admin" class="admin-link">Quản trị</a>
 <div class="rail-note flex items-center gap-[8px] [margin:26px_9px] text-[10px] text-muted max-[1130px]:hidden">
 <span class="live-dot inline-block shrink-0 w-[6px] h-[6px] rounded-full bg-green">
 </span> Một chút kết nối mỗi ngày.</div>
@@ -226,7 +226,7 @@ shell: `
 <a class="side-more flex justify-between [border-top:1px_solid_var(--color-line)] [padding:13px_17px] text-blue text-[11px]" href="#search">Khám phá thêm <span aria-hidden="true">↗</span>
 </a>
 </section>
-<p class="side-footer [margin:25px_8px] text-muted text-[11px] leading-[1.9]">Bản trải nghiệm · Dữ liệu mẫu<br/>Thao tác được lưu trong bản demo của bạn.<br/>© 2026 Postr. Tin tức theo cách của bạn.</p>
+<p class="side-footer [margin:25px_8px] text-muted text-[11px] leading-[1.9]">© 2026 Postr. Tin tức theo cách của bạn.</p>
 </aside>
 </div>
 <nav class="mobile-nav hidden max-[600px]:fixed max-[600px]:z-[10] max-[600px]:[inset:auto_0_0] max-[600px]:grid max-[600px]:grid-cols-[repeat(6,_1fr)] max-[600px]:[padding:8px_4px_max(8px,_env(safe-area-inset-bottom))] max-[600px]:[border-top:1px_solid_var(--color-edge)] max-[600px]:bg-[light-dark(#f8f3eaf5,_#1b1917f5)] max-[600px]:[backdrop-filter:blur(16px)] max-[600px]:[&amp;_a]:flex max-[600px]:[&amp;_a]:min-w-0 max-[600px]:[&amp;_a]:flex-col max-[600px]:[&amp;_a]:items-center max-[600px]:[&amp;_a]:justify-center max-[600px]:[&amp;_a]:gap-[6px] max-[600px]:[&amp;_a]:min-h-[43px] max-[600px]:[&amp;_a]:text-muted max-[600px]:[&amp;_a_&gt;_span:last-child]:text-[10px] max-[600px]:[&amp;_a_&gt;_span:last-child]:whitespace-nowrap max-[600px]:[&amp;_a.active]:text-[light-dark(#b94221,_#ff936e)] max-[600px]:[&amp;_a.active]:font-bold" aria-label="Điều hướng di động">
@@ -497,7 +497,7 @@ mail: `
 </div>
 <span aria-hidden="true">↗</span>
 </button>
-<p class="[margin:1em_0] demo-note m-[18px] text-center text-muted text-[10px] leading-[1.7]">Hội thoại minh họa · Được lưu trong bản demo này.</p>`,
+<p class="[margin:1em_0] demo-note m-[18px] text-center text-muted text-[10px] leading-[1.7]">Tin nhắn chỉ hiển thị với người tham gia cuộc trò chuyện.</p>`,
 user: `
 <div class="profile-cover flex items-center justify-between h-[165px] overflow-hidden p-[24px] [background:repeating-linear-gradient(-35deg,_transparent_0_25px,_#b4812c12_25px_26px),_light-dark(#eedcae,_#393122)] [&amp;_&gt;_span:first-child]:font-serif [&amp;_&gt;_span:first-child]:text-[28px] [&amp;_&gt;_span:first-child]:italic [&amp;_&gt;_span:first-child]:tracking-[-1px] [&amp;_&gt;_span:last-child]:text-[180px] [&amp;_&gt;_span:last-child]:leading-[1] [&amp;_&gt;_span:last-child]:text-accent [&amp;_&gt;_span:last-child]:[transform:rotate(10deg)] max-[600px]:h-[148px] max-[600px]:p-[18px] max-[600px]:[&amp;_&gt;_span:first-child]:text-[24px] max-[600px]:[&amp;_&gt;_span:last-child]:text-[150px]">
 <span>Ở đây, mình là mình.</span>
@@ -692,64 +692,3 @@ export const classes = {
   "profile-form": "profile-form grid gap-[20px] p-[24px] [&_label]:grid [&_label]:gap-[8px] [&_label]:text-[12px] [&_label]:font-bold [&_input]:p-[12px] [&_input]:[border:1px_solid_var(--color-line)] [&_input]:rounded-[9px] [&_input]:bg-paper [&_input]:text-[14px] [&_textarea]:p-[12px] [&_textarea]:[border:1px_solid_var(--color-line)] [&_textarea]:rounded-[9px] [&_textarea]:bg-paper [&_textarea]:text-[14px] [&_.post-button]:w-fit max-[600px]:[&_input]:text-[16px] max-[600px]:[&_textarea]:text-[16px]",
   "text-button": "[font-family:inherit] text-button inline-flex items-center gap-[6px] p-0 min-h-[30px] [border:0] bg-transparent text-[11px] font-bold [&:hover]:underline"
 };
-export const people = [
-  {
-    "initial": "M",
-    "tone": "orange",
-    "name": "Mê Việt Nam",
-    "handle": "@mevietnam",
-    "verified": true
-  },
-  {
-    "initial": "T",
-    "tone": "black",
-    "name": "Tech Daily",
-    "handle": "@techdaily",
-    "verified": true
-  },
-  {
-    "initial": "L",
-    "tone": "green",
-    "name": "Linh Trần",
-    "handle": "@linhtran"
-  },
-  {
-    "initial": "N",
-    "tone": "yellow",
-    "name": "Nhà Có Hai Người",
-    "handle": "@nhacohai"
-  },
-  {
-    "initial": "D",
-    "tone": "black",
-    "name": "Design Notes",
-    "handle": "@designnotes",
-    "verified": true
-  }
-];
-export const trends = [
-  {
-    "type": "Xu hướng tại Việt Nam",
-    "title": "#ChaoThangMoi",
-    "count": "18,2K bài đăng",
-    "query": "#ChaoThangMoi"
-  },
-  {
-    "type": "Công nghệ · Nổi bật",
-    "title": "AI tạo sinh",
-    "count": "9.584 bài đăng",
-    "query": "AI"
-  },
-  {
-    "type": "Thể thao · Được quan tâm",
-    "title": "U23 Việt Nam",
-    "count": "25,1K bài đăng",
-    "query": "U23"
-  },
-  {
-    "type": "Âm nhạc · Xu hướng",
-    "title": "#IndieViet",
-    "count": "4.620 bài đăng",
-    "query": "#IndieViet"
-  }
-];

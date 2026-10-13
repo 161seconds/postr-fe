@@ -7,23 +7,66 @@
 const nativeFetch = window.fetch.bind(window);
 const originalToken = sessionStorage.getItem('postr-token');
 const originalTheme = localStorage.getItem('postr-theme');
-let state = await (await nativeFetch('/api/state')).json();
+const person = {id:'a'.repeat(24),name:'Check Admin',handle:'@check_admin',initial:'C',tone:''};
+let state = {profile:{...person,bio:'',location:'',role:'ADMIN'},feed:[{id:1,author:person,copy:'Frontend check #Postr',topic:'Đời sống',time:'vừa xong',replies:[],comments:0,likes:0,reposts:0}],
+  following:[],interactions:{like:[],repost:[],save:[]},threads:{},contacts:[],people:[],trends:[{title:'#Postr',query:'#Postr',count:1}],notifications:[]};
 const contact = {id:'check-contact',name:'Database contact <b>',handle:'@check_contact',initial:'D',tone:''};
 state.contacts = [...(state.contacts || []),contact];
+state.people = [contact];
+state.feed[0].replies = ['Public reply']; state.feed[0].replyAuthors = [contact];
 state.threads[contact.handle] = [{copy:'Database message <img>',mine:false}];
 state.notifications = [
   {id:'check-comment',type:'COMMENT',name:'Database author <img>',copy:'Database reply <b>',postId:state.feed[0].id,read:false,createdAt:'2026-10-13T00:00:00Z'},
   {id:'check-like',type:'LIKE',name:'Another author',copy:'',postId:state.feed[0].id,read:true,createdAt:'2026-10-13T00:00:00Z'},
 ];
 state.unread = true;
-const anonymous = structuredClone(state);
+const paginationCheck = new URLSearchParams(location.search).has('pagination');
+if (paginationCheck) {
+  state.feed = Array.from({length:100},(_,index)=>({...state.feed[0],id:index+1,copy:`Bài viết ${index+1} #Postr`,topic:index%2?'Công nghệ':'Đời sống',replies:[],replyAuthors:[]}));
+  state.trends[0].count = 100;
+}
+const fixture = structuredClone(state);
+const adminCheck = new URLSearchParams(location.search).has('admin');
+const guestCheck = new URLSearchParams(location.search).has('guest');
+let anonymousWrites = 0, expireNext = false, delayPage = false, failPage = false;
+const stateRequests = [];
+let adminPost = {id:'b'.repeat(24),author:{displayName:'Real Author',username:'author'},content:'Real moderated post <img>',status:'ACTIVE',stats:{likes:0},createdAt:'2026-10-13T00:00:00Z'};
 window.fetch = async (url, options = {}) => {
   const body = options.body ? JSON.parse(options.body) : {};
   if (url === '/api/v1/auth/login' || url === '/api/v1/auth/register') {
-    state = structuredClone(anonymous); state.profile.name = 'Test Account';
+    state = structuredClone(fixture); state.profile.name = 'Test Account'; state.profile.role='USER';
     return new Response(JSON.stringify({accessToken:'test-token', user:{displayName:'Test Account'}}));
   }
-  if (url === '/api/v1/auth/logout') { state = structuredClone(anonymous); return new Response(null,{status:204}); }
+  if (url === '/api/v1/auth/logout') return new Response(null,{status:204});
+  if (expireNext && options.headers?.Authorization) { expireNext=false; return new Response(JSON.stringify({code:'UNAUTHORIZED'}),{status:401}); }
+  if (url.startsWith('/api/state')) {
+    const params=new URL(url,location.origin).searchParams,view=params.get('view')||'home';
+    const normalize=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
+    let feed=state.feed;
+    if(view==='post')feed=feed.filter(post=>post.id===Number(params.get('postId')));
+    if(view==='user')feed=feed.filter(post=>post.author.id===state.profile.id||state.interactions.repost.includes(post.id));
+    if(view==='following')feed=feed.filter(post=>post.author.id===state.profile.id||state.following.includes(post.author.handle));
+    if(view==='liked'||view==='bookmark')feed=feed.filter(post=>state.interactions[view==='liked'?'like':'save'].includes(post.id));
+    if(view==='search'){
+      const topic=params.get('topic')||'Tất cả',query=normalize(params.get('q')||'');
+      feed=feed.filter(post=>(topic==='Tất cả'||post.topic===topic)&&normalize(`${post.copy} ${post.quote||''} ${post.author.name} ${post.author.handle}`).includes(query));
+    }
+    const totalRecords=feed.length,totalPages=Math.ceil(totalRecords/20),page=Math.min(Number(params.get('page')||1),Math.max(1,totalPages));
+    stateRequests.push({view,page,topic:params.get('topic'),query:params.get('q')});
+    if(failPage&&page===2){failPage=false;return new Response(JSON.stringify({message:'Lỗi mạng kiểm tra'}),{status:503});}
+    if(delayPage&&page===2){delayPage=false;await new Promise(resolve=>setTimeout(resolve,80));}
+    const identity=options.headers?.Authorization?{profile:{...state.profile,postCount:state.feed.filter(post=>post.author.id===state.profile.id||state.interactions.repost.includes(post.id)).length}}:{profile:null,following:[],interactions:{like:[],repost:[],save:[]},threads:{},contacts:[],notifications:[],unread:false};
+    return new Response(JSON.stringify({...state,...identity,feed:feed.slice((page-1)*20,page*20),pagination:{page,pageSize:20,totalPages,totalRecords}}));
+  }
+  if (url.startsWith('/api/')&&!options.headers?.Authorization) { if(options.method!=='GET')anonymousWrites++;return new Response(JSON.stringify({code:'UNAUTHORIZED'}),{status:401}); }
+  if (url === '/api/v1/admin/dashboard') return new Response(JSON.stringify({totalUsers:2,totalPosts:1,activePosts:Number(adminPost.status==='ACTIVE'),hiddenPosts:Number(adminPost.status==='HIDDEN')}));
+  if (url.startsWith('/api/v1/admin/posts/')&&options.method==='PATCH') { adminPost={...adminPost,status:body.status,moderationReason:body.status==='HIDDEN'?body.reason:null};return new Response(JSON.stringify(adminPost)); }
+  if (url.startsWith('/api/v1/admin/posts?')) {
+    const params=new URL(url,location.origin).searchParams;
+    const visible=(params.get('status')==='ALL'||params.get('status')===adminPost.status)&&adminPost.content.includes(params.get('search')||'');
+    if(params.get('status')==='ACTIVE')await new Promise(resolve=>setTimeout(resolve,50));
+    return new Response(JSON.stringify({data:visible?[adminPost]:[],page:1,totalPages:visible?1:0,totalRecords:Number(visible)}));
+  }
   if (url.startsWith('/api/posts/') && url.includes('/actions/')) {
     const [, , , id, , action] = url.split('/');
     const items = state.interactions[action];
@@ -35,11 +78,101 @@ window.fetch = async (url, options = {}) => {
 const $ = (selector,root=document) => root.querySelector(selector);
 const wait = async predicate => { for(let i=0;i<100;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,20));}throw Error('Timed out'); };
 const assert = (condition,message) => { if(!condition)throw Error(message); };
-const go = hash => { location.hash = hash;window.dispatchEvent(new Event('hashchange')); };
+const go = async hash => { location.hash = hash;window.dispatchEvent(new Event('hashchange'));await new Promise(resolve=>setTimeout(resolve,20)); };
 try {
-  sessionStorage.removeItem('postr-token');
+  guestCheck?sessionStorage.removeItem('postr-token'):sessionStorage.setItem('postr-token','check-admin-token');
   localStorage.setItem('postr-theme','dark');
+  if(adminCheck)history.replaceState(null,'','/admin');
   await import('./app.js');
+  if(adminCheck){
+    await wait(()=>$('tbody button'));
+    assert(parseFloat(getComputedStyle($('.admin-page')).paddingTop)>=24,'Admin page padding missing');
+    assert(getComputedStyle($('[data-counts]')).gridTemplateColumns.split(' ').length===(innerWidth<=600?2:4),'Admin statistics layout missing');
+    assert(getComputedStyle($('[role=region]')).overflowX==='auto','Admin table cannot scroll on mobile');
+    assert($('tbody').textContent.includes('Real moderated post <img>')&&!$('tbody img'),'Admin content not escaped');
+    $('tbody button').click();const form=$('#dialogs form');$('textarea',form).value=' x ';form.dispatchEvent(new Event('submit',{cancelable:true}));
+    assert($('#reason-error').textContent&&adminPost.status==='ACTIVE','Invalid moderation persisted');
+    $('textarea',form).value='Real spam reason';form.dispatchEvent(new Event('submit',{cancelable:true}));
+    await wait(()=>$('tbody button')?.textContent==='Khôi phục');
+    assert(adminPost.status==='HIDDEN'&&$('tbody').textContent.includes('Real spam reason'),'Moderation did not reach API');
+    $('select').value='ACTIVE';$('select').dispatchEvent(new Event('change'));await wait(()=>!$('tbody button'));
+    assert($('[data-admin-result]').textContent==='Tìm thấy 0 bài đăng.','Admin filter ignored');
+    $('select').value='HIDDEN';$('select').dispatchEvent(new Event('change'));await wait(()=>$('tbody button'));
+    $('select').value='ACTIVE';$('select').dispatchEvent(new Event('change'));$('select').value='HIDDEN';$('select').dispatchEvent(new Event('change'));
+    await new Promise(resolve=>setTimeout(resolve,100));assert($('tbody button')?.textContent==='Khôi phục','Older admin request overwrote selected filter');
+    $('tbody button').click();await wait(()=>adminPost.status==='ACTIVE'&&!$('tbody button'));
+    assert(document.documentElement.scrollWidth<=innerWidth,'Admin layout overflows viewport');
+    $('[data-logout]').click();await wait(()=>$('[data-login]'));assert(!$('tbody')&&!$('#dialogs dialog'),'Admin data leaked after logout');
+    $('#check-result').textContent='PASS: admin API, validation, filters, hide/restore, responsive, logout.';
+  } else if (paginationCheck) {
+    await wait(()=>document.querySelectorAll('.post').length===20);await document.fonts.ready;
+    const draft=$('.composer textarea');draft.value='Paging draft';draft.dispatchEvent(new Event('input'));
+    $('.post [data-action=reply]').click();const reply=$('.reply-form input');reply.value='Scrolling reply draft';
+    const more=()=>{ $('[data-feed-more]').scrollIntoView({block:'end'}); return scrollY; };
+    for(let page=2;page<=5;page++){
+      const position=more();await wait(()=>document.querySelectorAll('.post').length===page*20);
+      const posts=[...document.querySelectorAll('.post')];
+      assert(new Set(posts.map(post=>post.dataset.id)).size===page*20,'Duplicate/missing appended posts');
+      assert($('.composer textarea')===draft&&draft.value==='Paging draft','Loading more replaced composer/lost draft');
+      assert($('.reply-form input')===reply&&reply.value==='Scrolling reply draft','Loading more lost reply draft');
+      assert(Math.abs(scrollY-position)<2,'Loading more changed scroll position');
+    }
+    assert(!$('.feed-pagination')&&$('[data-feed-more]').textContent.includes('Bạn đã bắt kịp'),'Manual pager remains/end missing');
+    const requests=stateRequests.length;more();await new Promise(resolve=>setTimeout(resolve,100));
+    assert(stateRequests.length===requests,'End of feed keeps requesting pages');
+    $('.post [data-action=reply]').click();const liked=$('.post[data-id="81"] [data-action=like]');liked.click();
+    await wait(()=>$('.post[data-id="81"] [data-action=like]')?.getAttribute('aria-pressed')==='true');
+    assert(document.querySelectorAll('.post').length===100&&$('.composer textarea').value==='Paging draft','Interaction discarded loaded posts/draft');
+    await go('#post/81');assert(document.querySelectorAll('.post').length===1&&$('.post').dataset.id==='81','Deep link outside first page broken');
+    await go('#search/bai%20viet%2037');assert(document.querySelectorAll('.post').length===1&&$('.post').dataset.id==='37','Global search broken');
+    await go('#search');[...document.querySelectorAll('.topic-filters button')].find(button=>button.textContent==='Công nghệ').click();
+    await wait(()=>document.querySelectorAll('.post').length===20&&[...document.querySelectorAll('.post')].every(post=>Number(post.dataset.id)%2===0));
+    more();await wait(()=>document.querySelectorAll('.post').length===40);more();await wait(()=>document.querySelectorAll('.post').length===50);
+    [...document.querySelectorAll('.topic-filters button')].find(button=>button.textContent==='Đời sống').click();
+    await wait(()=>document.querySelectorAll('.post').length===20&&[...document.querySelectorAll('.post')].every(post=>Number(post.dataset.id)%2===1));
+    assert(scrollY===0,'Changing topic did not reset scroll');
+    await go('#user');assert($('.profile-stats').textContent.includes('100'),'Profile count uses only current page');
+    await go('#home');failPage=true;more();await wait(()=>$('[data-feed-more] button'));
+    assert(document.querySelectorAll('.post').length===20,'Failed load discarded posts');
+    const failedRequests=stateRequests.length;await new Promise(resolve=>setTimeout(resolve,100));
+    assert(stateRequests.length===failedRequests,'Failed page keeps retrying automatically');
+    $('[data-feed-more] button').click();await wait(()=>document.querySelectorAll('.post').length===40);
+    assert(new Set([...document.querySelectorAll('.post')].map(post=>post.dataset.id)).size===40,'Retry duplicated/skipped posts');
+    await go('#search/bai%20viet%2037');await go('#home');delayPage=true;more();await wait(()=>!delayPage);
+    await go('#search/bai%20viet%2037');await new Promise(resolve=>setTimeout(resolve,100));
+    assert(document.querySelectorAll('.post').length===1&&$('.post').dataset.id==='37','Older page overwrote search');
+    await go('#home');delayPage=true;const pageTwoRequests=stateRequests.filter(request=>request.view==='home'&&request.page===2).length;
+    more();await wait(()=>!delayPage);window.scrollTo(0,0);more();
+    $('.heading-actions .follow').click();await wait(()=>$('.heading-actions [data-login]'));await new Promise(resolve=>setTimeout(resolve,100));
+    assert(stateRequests.filter(request=>request.view==='home'&&request.page===2).length===pageTwoRequests+1,'Concurrent load duplicated requests');
+    assert(document.querySelectorAll('.post').length===20&&!$('.composer'),'Older page restored account data after logout');
+    assert(document.documentElement.scrollWidth<=innerWidth,'Scrolling feed overflows viewport');
+    $('#check-result').textContent='PASS: infinite scroll/100 unique posts, drafts, scroll position, end, retry, interactions, filters, deep links, request/account races.';
+  } else if (guestCheck) {
+    await wait(()=>$('.post'));await document.fonts.ready;
+    assert(!$('.composer')&&!$('#dialogs dialog'),'Guest cannot browse without login');
+    assert(!$('.admin-link')&&!$('.profile-mini')&&!$('.notification-dot'),'Guest sees account controls');
+    assert(document.documentElement.scrollWidth<=innerWidth,'Guest layout overflows');
+    await go('#post/1');assert($('.post-copy').textContent==='Frontend check #Postr','Guest cannot open post');
+    $('.post [data-action=reply]').click();assert($('.replies').textContent.includes('Public reply')&&!$('.reply-form'),'Guest cannot read public comments');
+    await go('#search/Postr');assert($('.post')&&!$('#dialogs dialog'),'Guest search requires login');
+    await go('#home');$('.post [data-action=like]').click();
+    const dialog=$('#dialogs dialog'),box=dialog.getBoundingClientRect();
+    assert(dialog.open&&Math.abs(box.x+box.width/2-innerWidth/2)<1&&Math.abs(box.y+box.height/2-innerHeight/2)<1,'Login dialog not centered');
+    assert(box.x>=0&&box.y>=0&&box.right<=innerWidth&&box.bottom<=innerHeight,'Login dialog overflows');
+    $('[data-switch]',dialog).click();const registerBox=dialog.getBoundingClientRect();
+    assert(Math.abs(registerBox.y+registerBox.height/2-innerHeight/2)<1&&dialog.scrollHeight>=dialog.clientHeight,'Register dialog not centered/scrollable');
+    $('.modal-heading button',dialog).click();assert($('.post')&&!dialog.open,'Closing login blocks feed');
+    $('[aria-label="Đăng bài"]').click();assert($('#auth-title'),'Guest compose bypassed login');$('#dialogs dialog').close();
+    $('.suggestion button').click();assert($('#auth-title'),'Guest follow bypassed login');$('#dialogs dialog').close();
+    for(const page of ['bell','mail','bookmark','user']){await go('#'+page);assert($('[data-login]')&&!$('.thread')&&!$('.notification')&&!$('.profile-top'),'Guest sees private data');}
+    assert(anonymousWrites===0&&state.interactions.like.length===0,'Guest sent a write');
+    await go('#home');$('.heading-actions [data-login]').click();const form=$('#dialogs form');$('[name=email]',form).value='check';$('[name=password]',form).value='Test-password-123';form.requestSubmit();
+    await wait(()=>$('.composer'));$('.composer textarea').value='Expired account draft';$('.composer textarea').dispatchEvent(new Event('input'));
+    expireNext=true;$('.post [data-action=like]').click();await wait(()=>$('.heading-actions [data-login]'));
+    assert($('.post')&&!$('.composer')&&!$('.conversation')&&!$('#dialogs dialog'),'Expired token did not return to public feed');
+    $('#check-result').textContent='PASS: public feed/search/comments, guarded actions, centered dialogs, private data, expired token.';
+  } else {
   await wait(()=>$('.post'));
   await document.fonts.ready;
   assert(document.documentElement.scrollWidth<=innerWidth,'Layout overflows viewport');
@@ -68,7 +201,7 @@ try {
   const emoji = $('.composer [aria-label="Thêm biểu cảm"]');emoji.click();
   assert(emoji.getAttribute('aria-expanded')==='true','Emoji picker missing expanded state');
   $('.emoji-picker button').click();assert(emoji.getAttribute('aria-expanded')==='false','Emoji picker missing collapsed state');
-  go('#bell');
+  await go('#bell');
   assert(document.querySelectorAll('.notification').length===2,'Database notifications missing');
   assert($('.notification strong').textContent==='Database author <img>'&&!$('.notification img'),'Notification author not escaped');
   assert($('.notification blockquote').textContent==='Database reply <b>','Notification text missing');
@@ -76,24 +209,31 @@ try {
   assert(document.querySelectorAll('.notification.unread').length===1,'Notification read state ignored');
   document.querySelectorAll('.tab')[1].click();
   assert(document.querySelectorAll('.notification').length===1,'Mention filter ignored');
-  go('#mail');
+  await go('#mail');
   const thread = [...document.querySelectorAll('.thread')].find(node=>$('small',node).textContent===contact.handle);
   assert(thread&&$('strong',thread).textContent===contact.name,'Database contact missing');thread.click();
   assert($('.message p').textContent==='Database message <img>'&&!$('.message img'),'Database message missing or not escaped');
   $('.conversation-header button').click();
-  go('#mail');$('.thread').click();const message=$('.message-form textarea');message.value='Private message draft';message.dispatchEvent(new Event('input'));
-  go('#home');$('.heading-actions .follow').click();
+  await go('#mail');$('.thread').click();const message=$('.message-form textarea');message.value='Private message draft';message.dispatchEvent(new Event('input'));
+  await go('#home');$('.heading-actions .follow').click();await wait(()=>$('[data-login]'));
+  assert(!$('.composer')&&!$('.conversation'),'Account UI remains after logout');
+  $('[data-login]').click();
   const auth=$('#dialogs form');$('[name=email]',auth).value='check@example.com';$('[name=password]',auth).value='Test-password-123';
-  auth.dispatchEvent(new Event('submit',{cancelable:true}));await wait(()=>$('.heading-actions .follow').textContent==='Đăng xuất');
-  assert($('.composer textarea').value===''&&!$('.attachment'),'Anonymous draft leaked into account');
-  go('#mail');assert($('.thread')&&!$('.conversation'),'Conversation selection survived identity change');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked into account');
+  auth.dispatchEvent(new Event('submit',{cancelable:true}));await wait(()=>$('.heading-actions .follow')?.textContent==='Đăng xuất');
+  assert($('.composer textarea').value===''&&!$('.attachment'),'Previous account draft leaked into account');
+  assert(!$('.admin-link')&&!$('.admin-mobile'),'Admin link visible to regular account');
+  await go('#mail');assert($('.thread')&&!$('.conversation'),'Conversation selection survived identity change');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked into account');
   $('.message-form textarea').value='Account message draft';$('.message-form textarea').dispatchEvent(new Event('input'));
-  go('#home');$('.composer textarea').value='Account draft';$('.composer textarea').dispatchEvent(new Event('input'));
-  $('.heading-actions .follow').click();await wait(()=>$('.heading-actions .follow').textContent==='Đăng nhập');
-  assert($('.composer textarea').value===''&&!$('.attachment'),'Account draft leaked into anonymous session');
-  go('#mail');assert($('.thread')&&!$('.conversation'),'Selected conversation leaked after logout');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked after logout');
-  $('#check-result').textContent='PASS: màu/font sáng/tối; link admin responsive; ảnh/text giữ qua render; emoji accessible; thông báo/hội thoại từ DB; draft không lộ qua login/logout.';
-} catch(error) { $('#check-result').textContent=`FAIL: ${error.message}`;throw error; }
+  await go('#home');$('.composer textarea').value='Account draft';$('.composer textarea').dispatchEvent(new Event('input'));
+  $('.heading-actions .follow').click();await wait(()=>$('[data-login]'));
+  assert(!$('.composer')&&!$('.conversation'),'Account data leaked after logout');
+  await go('#mail');assert($('[data-login]')&&!$('.thread'),'Anonymous viewer bypassed login');
+  $('[data-login]').click();const next=$('#dialogs form');$('[name=email]',next).value='another';$('[name=password]',next).value='Test-password-123';next.dispatchEvent(new Event('submit',{cancelable:true}));
+  await wait(()=>$('.thread'));assert(!$('.conversation'),'Selected conversation leaked into next account');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked into next account');
+  await go('#home');assert($('.composer textarea').value===''&&!$('.attachment'),'Post draft leaked into next account');
+  $('#check-result').textContent='PASS: colors/fonts, responsive, real contacts/notifications, public logout, account isolation.';
+  }
+} catch(error) { $('#check-result').textContent=`FAIL: ${error.stack}`;throw error; }
 finally {
   window.fetch=nativeFetch;
   originalToken===null?sessionStorage.removeItem('postr-token'):sessionStorage.setItem('postr-token',originalToken);
