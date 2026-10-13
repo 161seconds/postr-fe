@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#171614"><title>Postr frontend check</title><link rel="stylesheet" href="/styles.css"></head>
+<body><p id="check-result" role="status">Đang kiểm tra giao diện…</p><div id="app"></div><div id="dialogs"></div><div id="toast" role="status"></div>
+<script type="module">
+// Runs the real UI against an in-memory API. No writes reach the backend.
+const nativeFetch = window.fetch.bind(window);
+const originalToken = sessionStorage.getItem('postr-token');
+const originalTheme = localStorage.getItem('postr-theme');
+let state = await (await nativeFetch('/api/state')).json();
+const contact = {id:'check-contact',name:'Database contact <b>',handle:'@check_contact',initial:'D',tone:''};
+state.contacts = [...(state.contacts || []),contact];
+state.threads[contact.handle] = [{copy:'Database message <img>',mine:false}];
+state.notifications = [
+  {id:'check-comment',type:'COMMENT',name:'Database author <img>',copy:'Database reply <b>',postId:state.feed[0].id,read:false,createdAt:'2026-10-13T00:00:00Z'},
+  {id:'check-like',type:'LIKE',name:'Another author',copy:'',postId:state.feed[0].id,read:true,createdAt:'2026-10-13T00:00:00Z'},
+];
+state.unread = true;
+const anonymous = structuredClone(state);
+window.fetch = async (url, options = {}) => {
+  const body = options.body ? JSON.parse(options.body) : {};
+  if (url === '/api/v1/auth/login' || url === '/api/v1/auth/register') {
+    state = structuredClone(anonymous); state.profile.name = 'Test Account';
+    return new Response(JSON.stringify({accessToken:'test-token', user:{displayName:'Test Account'}}));
+  }
+  if (url === '/api/v1/auth/logout') { state = structuredClone(anonymous); return new Response(null,{status:204}); }
+  if (url.startsWith('/api/posts/') && url.includes('/actions/')) {
+    const [, , , id, , action] = url.split('/');
+    const items = state.interactions[action];
+    state.interactions[action] = items.includes(Number(id)) ? items.filter(value => value !== Number(id)) : [...items,Number(id)];
+  }
+  if (url.startsWith('/api/')) return new Response(JSON.stringify(state));
+  return nativeFetch(url,options);
+};
+const $ = (selector,root=document) => root.querySelector(selector);
+const wait = async predicate => { for(let i=0;i<100;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,20));}throw Error('Timed out'); };
+const assert = (condition,message) => { if(!condition)throw Error(message); };
+const go = hash => { location.hash = hash;window.dispatchEvent(new Event('hashchange')); };
+try {
+  sessionStorage.removeItem('postr-token');
+  localStorage.setItem('postr-theme','dark');
+  await import('./app.js');
+  await wait(()=>$('.post'));
+  await document.fonts.ready;
+  assert(document.documentElement.scrollWidth<=innerWidth,'Layout overflows viewport');
+  const checkTheme = (paper,ink,card) => {
+    assert(getComputedStyle(document.documentElement).backgroundColor===paper,'Theme background missing');
+    assert(getComputedStyle($('.post')).color===ink,'Post text has wrong contrast');
+    const button=getComputedStyle($('.primary'));
+    assert(button.backgroundColor===ink&&button.color===card,'Primary button theme missing');
+  };
+  checkTheme('rgb(23, 22, 20)','rgb(241, 234, 224)','rgb(33, 31, 28)');
+  assert(getComputedStyle($('.page-heading h1')).fontFamily.startsWith('"serif"'),'Heading uses generic serif instead of local font');
+  assert(document.fonts.check('700 28px "serif"'),'Local heading font failed to load');
+  assert((innerWidth>=601)===(getComputedStyle($('.admin-mobile')).display==='none'),'Admin link has wrong responsive visibility');
+  $('.theme-toggle').click();
+  checkTheme('rgb(245, 240, 232)','rgb(36, 34, 31)','rgb(255, 253, 248)');
+  $('.theme-toggle').click();
+  const draft = $('.composer textarea'); draft.value = 'Private account draft'; draft.dispatchEvent(new Event('input'));
+  const bytes = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1sAAAAASUVORK5CYII='),char=>char.charCodeAt(0));
+  const files = new DataTransfer(); files.items.add(new File([bytes],'check.png',{type:'image/png'}));
+  const input = $('.composer input[type=file]'); input.files=files.files;input.dispatchEvent(new Event('change'));
+  await wait(()=>$('.attachment img'));
+  const firstAction = $('.post [data-action=like]'), pressed = firstAction.getAttribute('aria-pressed'); firstAction.click();
+  await wait(()=>$('.post [data-action=like]').getAttribute('aria-pressed')!==pressed);
+  assert($('.composer .attachment img'),'Image draft lost after unrelated render');
+  assert($('.composer textarea').value==='Private account draft','Text draft lost after unrelated render');
+  const emoji = $('.composer [aria-label="Thêm biểu cảm"]');emoji.click();
+  assert(emoji.getAttribute('aria-expanded')==='true','Emoji picker missing expanded state');
+  $('.emoji-picker button').click();assert(emoji.getAttribute('aria-expanded')==='false','Emoji picker missing collapsed state');
+  go('#bell');
+  assert(document.querySelectorAll('.notification').length===2,'Database notifications missing');
+  assert($('.notification strong').textContent==='Database author <img>'&&!$('.notification img'),'Notification author not escaped');
+  assert($('.notification blockquote').textContent==='Database reply <b>','Notification text missing');
+  assert($('.notification').getAttribute('href')===`#post/${state.feed[0].id}`,'Notification links to wrong post');
+  assert(document.querySelectorAll('.notification.unread').length===1,'Notification read state ignored');
+  document.querySelectorAll('.tab')[1].click();
+  assert(document.querySelectorAll('.notification').length===1,'Mention filter ignored');
+  go('#mail');
+  const thread = [...document.querySelectorAll('.thread')].find(node=>$('small',node).textContent===contact.handle);
+  assert(thread&&$('strong',thread).textContent===contact.name,'Database contact missing');thread.click();
+  assert($('.message p').textContent==='Database message <img>'&&!$('.message img'),'Database message missing or not escaped');
+  $('.conversation-header button').click();
+  go('#mail');$('.thread').click();const message=$('.message-form textarea');message.value='Private message draft';message.dispatchEvent(new Event('input'));
+  go('#home');$('.heading-actions .follow').click();
+  const auth=$('#dialogs form');$('[name=email]',auth).value='check@example.com';$('[name=password]',auth).value='Test-password-123';
+  auth.dispatchEvent(new Event('submit',{cancelable:true}));await wait(()=>$('.heading-actions .follow').textContent==='Đăng xuất');
+  assert($('.composer textarea').value===''&&!$('.attachment'),'Anonymous draft leaked into account');
+  go('#mail');assert($('.thread')&&!$('.conversation'),'Conversation selection survived identity change');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked into account');
+  $('.message-form textarea').value='Account message draft';$('.message-form textarea').dispatchEvent(new Event('input'));
+  go('#home');$('.composer textarea').value='Account draft';$('.composer textarea').dispatchEvent(new Event('input'));
+  $('.heading-actions .follow').click();await wait(()=>$('.heading-actions .follow').textContent==='Đăng nhập');
+  assert($('.composer textarea').value===''&&!$('.attachment'),'Account draft leaked into anonymous session');
+  go('#mail');assert($('.thread')&&!$('.conversation'),'Selected conversation leaked after logout');$('.thread').click();assert($('.message-form textarea').value==='','Message draft leaked after logout');
+  $('#check-result').textContent='PASS: màu/font sáng/tối; link admin responsive; ảnh/text giữ qua render; emoji accessible; thông báo/hội thoại từ DB; draft không lộ qua login/logout.';
+} catch(error) { $('#check-result').textContent=`FAIL: ${error.message}`;throw error; }
+finally {
+  window.fetch=nativeFetch;
+  originalToken===null?sessionStorage.removeItem('postr-token'):sessionStorage.setItem('postr-token',originalToken);
+  originalTheme===null?localStorage.removeItem('postr-theme'):localStorage.setItem('postr-theme',originalTheme);
+}
+</script></body></html>
