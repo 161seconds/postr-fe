@@ -261,6 +261,7 @@ function render() {
     if (!content)
         content = `<section class="${cl('empty-state')}"><h2>Không tìm thấy trang.</h2><a href="#home">Về trang chủ</a></section>`;
     $('#app').innerHTML = profileHTML(templates.shell).replace('__CONTENT__', content);
+    $('.shell').classList.toggle('home-shell', name === 'home');
     populateCommunity();
     if (state.profile?.role !== 'ADMIN') $$('.admin-link,.admin-mobile').forEach(link => link.remove());
     if (!state.profile) $$('.profile-mini,.mobile-header-actions [href="#user"]').forEach(link => link.remove());
@@ -501,6 +502,7 @@ function setupMail() {
 async function login() {
     const dialog = document.createElement('dialog'); dialog.className = cl('modal') + ' auth-dialog'; dialog.setAttribute('aria-labelledby', 'auth-title'); dialog.setAttribute('aria-describedby', 'auth-description');
     const eye = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path class="password-slash" d="m3 3 18 18"/></svg>';
+    const nameDemo = `<div class="auth-name-demo">${avatar({ initial: 'M', tone: '' })}<div><strong class="auth-demo-name">Minh Anh</strong><span class="auth-demo-handle">@minh_anh</span></div></div>`;
     dialog.innerHTML = `<div class="auth-layout">
         <aside class="auth-story" aria-hidden="true">
             <span class="auth-wordmark">postr.</span>
@@ -514,10 +516,31 @@ async function login() {
             </svg>
             <p class="auth-story-footer">Viết. Chia sẻ. Tìm thấy nhau.</p>
         </aside>
-        <section class="auth-content"><div class="${cl('modal-heading')}"><div><p class="auth-eyebrow">Góc nhỏ của bạn</p><h2 id="auth-title">Đăng nhập</h2><p id="auth-description">Tiếp tục những câu chuyện của bạn.</p></div><button type="button" class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="auth-form"><label data-register hidden>Tên hiển thị<input name="displayName" maxlength="50" autocomplete="name" placeholder="Tên bạn muốn mọi người biết"></label><label data-register hidden>Tên người dùng<input name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="Ví dụ: minh_anh"></label><label><span data-login-label>Tên đăng nhập hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username" placeholder="Tên người dùng hoặc email" autofocus></label><div class="auth-password"><label for="auth-password">Mật khẩu</label><div class="password-input"><input id="auth-password" name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Nhập mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu" aria-controls="auth-password" aria-label="Hiện mật khẩu" aria-pressed="false">${eye}</button></div></div><div class="auth-password" data-register hidden><label for="auth-confirm-password">Nhập lại mật khẩu</label><div class="password-input"><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Nhập lại mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu nhập lại" aria-controls="auth-confirm-password" aria-label="Hiện mật khẩu nhập lại" aria-pressed="false">${eye}</button></div></div><p role="alert"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button></form><p class="auth-switch"><span data-switch-copy>Chưa có tài khoản?</span> <button type="button" data-switch>Đăng ký</button></p></section>
+        <section class="auth-content"><div class="${cl('modal-heading')}"><div><p class="auth-eyebrow">Góc nhỏ của bạn</p><h2 id="auth-title">Đăng nhập</h2><p id="auth-description">Tiếp tục những câu chuyện của bạn.</p></div><button type="button" class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="auth-form">
+            <div id="auth-display-field" class="auth-name-field" data-register hidden>
+                <div class="auth-name-label"><label for="auth-display-name">Tên hiển thị</label><button type="button" class="auth-name-help" popovertarget="auth-display-example" aria-label="Xem ví dụ tên hiển thị" aria-describedby="auth-display-example">Xem ví dụ</button></div>
+                <input id="auth-display-name" name="displayName" maxlength="50" autocomplete="name" placeholder="Ví dụ: Minh Anh" aria-describedby="auth-display-hint">
+                <p id="auth-display-hint" class="auth-name-hint">Tên trên hồ sơ và bài viết. Có thể trùng.</p>
+                <div id="auth-display-example" class="auth-name-example auth-example-display" popover role="tooltip"><p class="auth-example-heading">Ví dụ tên hiển thị trên hồ sơ</p>${nameDemo}<p><strong>Minh Anh</strong> là tên mọi người thấy. Có thể có dấu và khoảng trắng.</p></div>
+            </div>
+            <div id="auth-username-field" class="auth-name-field" data-register hidden>
+                <div class="auth-name-label"><label for="auth-username">Tên tài khoản</label><button type="button" class="auth-name-help" popovertarget="auth-username-example" aria-label="Xem ví dụ tên tài khoản" aria-describedby="auth-username-example">Xem ví dụ</button></div>
+                <input id="auth-username" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" title="3–30 ký tự: chữ không dấu, số hoặc dấu gạch dưới (_). Không nhập @." autocomplete="username" placeholder="Ví dụ: minh_anh" aria-describedby="auth-username-hint">
+                <p id="auth-username-hint" class="auth-name-hint">Tên duy nhất để đăng nhập. Không nhập @.</p>
+                <div id="auth-username-example" class="auth-name-example auth-example-username" popover role="tooltip"><p class="auth-example-heading">Ví dụ tên tài khoản trên hồ sơ</p>${nameDemo}<p><strong>minh_anh</strong> là tên tài khoản. Chỉ dùng chữ không dấu, số hoặc dấu gạch dưới (_); không nhập @.</p></div>
+            </div>
+            <label><span data-login-label>Tên tài khoản hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username" placeholder="Tên tài khoản hoặc email" autofocus></label><div class="auth-password"><label for="auth-password">Mật khẩu</label><div class="password-input"><input id="auth-password" name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Nhập mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu" aria-controls="auth-password" aria-label="Hiện mật khẩu" aria-pressed="false">${eye}</button></div></div><div class="auth-password" data-register hidden><label for="auth-confirm-password">Nhập lại mật khẩu</label><div class="password-input"><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Nhập lại mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu nhập lại" aria-controls="auth-confirm-password" aria-label="Hiện mật khẩu nhập lại" aria-pressed="false">${eye}</button></div></div><p role="alert"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button></form><p class="auth-switch"><span data-switch-copy>Chưa có tài khoản?</span> <button type="button" data-switch>Đăng ký</button></p></section>
     </div>`;
     $('#dialogs').replaceChildren(dialog); $('.modal-heading button', dialog).onclick = () => dialog.close();
     let register = false; const form = $('form', dialog); $$('[data-register] input', dialog).forEach(input => input.disabled = true);
+    $$('.auth-name-field', form).forEach(field => {
+        const preview = $('[popover]', field), button = $('[popovertarget]', field);
+        field.onpointerenter = event => { if (event.pointerType === 'mouse') preview.showPopover(); };
+        field.onpointerleave = () => { if (document.activeElement !== button) preview.hidePopover(); };
+        button.onfocus = () => { if (button.matches(':focus-visible')) preview.showPopover(); };
+        button.onblur = () => { if (!field.matches(':hover')) preview.hidePopover(); };
+    });
+    dialog.addEventListener('close', () => $('[popover]:popover-open', dialog)?.hidePopover());
     const password = $('[name=password]', form), confirmation = $('[name=confirmPassword]', form);
     const validatePasswords = () => confirmation.setCustomValidity(register && confirmation.value !== password.value ? 'Mật khẩu nhập lại không khớp.' : '');
     password.oninput = confirmation.oninput = validatePasswords;
@@ -528,6 +551,7 @@ async function login() {
         button.setAttribute('aria-label', `${visible ? 'Ẩn' : 'Hiện'} ${button.dataset.passwordToggle}`);
     });
     $('[data-switch]', dialog).onclick = () => {
+        $('[popover]:popover-open', dialog)?.hidePopover();
         register = !register;
         $$('[data-register]', dialog).forEach(label => { label.hidden = !register; $('input', label).required = register; $('input', label).disabled = !register; });
         $('#auth-title').textContent = register ? 'Đăng ký' : 'Đăng nhập'; $('[type=submit]', form).textContent = register ? 'Đăng ký' : 'Đăng nhập';
@@ -538,9 +562,9 @@ async function login() {
         confirmation.value = ''; validatePasswords();
         $$('[data-password-toggle][aria-pressed=true]', form).forEach(button => button.click());
         $('[name=password]', form).autocomplete = register ? 'new-password' : 'current-password';
-        $('[data-login-label]', dialog).textContent = register ? 'Email' : 'Tên đăng nhập hoặc email';
+        $('[data-login-label]', dialog).textContent = register ? 'Email' : 'Tên tài khoản hoặc email';
         const email = $('[name=email]', dialog); email.type = register ? 'email' : 'text'; email.autocomplete = register ? 'email' : 'username';
-        email.placeholder = register ? 'ban@example.com' : 'Tên người dùng hoặc email';
+        email.placeholder = register ? 'ban@example.com' : 'Tên tài khoản hoặc email';
         $(register ? '[name=displayName]' : '[name=email]', form).focus();
     };
     form.onsubmit = async (event) => { event.preventDefault(); validatePasswords(); if (!form.reportValidity()) return; const button = $('[type=submit]', form); button.disabled = true; try {

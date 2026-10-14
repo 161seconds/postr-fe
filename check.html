@@ -199,6 +199,13 @@
         assert(Math.abs(registerBox.y + registerBox.height / 2 - innerHeight / 2) < 1 && dialog.scrollHeight >= dialog.clientHeight, 'Register dialog not centered/scrollable');
         const registerForm = $('form', dialog);
         assert(confirmation.required && !confirmation.disabled && !confirmation.closest('[data-register]').hidden, 'Register confirmation missing');
+        const displayExample = $('#auth-display-example', dialog), usernameExample = $('#auth-username-example', dialog), displayField = $('#auth-display-field', dialog);
+        $('[name=email]', dialog).focus();
+        displayField.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' })); assert(!displayExample.matches(':popover-open'), 'Touch hover opened name demo');
+        displayField.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' })); assert(displayExample.matches(':popover-open'), 'Display-name hover demo missing');
+        displayField.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' })); assert(!displayExample.matches(':popover-open'), 'Name demo remained after hover ended');
+        $('[popovertarget=auth-display-example]', dialog).click(); assert(displayExample.matches(':popover-open'), 'Name demo cannot open by tap');
+        $('[popovertarget=auth-username-example]', dialog).click(); assert(usernameExample.matches(':popover-open') && !displayExample.matches(':popover-open'), 'Name demos overlap');
         $('[name=displayName]', dialog).value = 'Check'; $('[name=username]', dialog).value = 'check'; $('[name=email]', dialog).value = 'check@example.com';
         confirmation.value = 'Different-password-123'; confirmation.dispatchEvent(new Event('input'));
         registerForm.requestSubmit(); registerForm.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -210,8 +217,10 @@
         const confirmToggle = $('[aria-controls=auth-confirm-password]', dialog); confirmToggle.click();
         assert(confirmation.type === 'text' && confirmation.value === password.value && confirmToggle.getAttribute('aria-label') === 'Ẩn mật khẩu nhập lại', 'Confirmation reveal failed');
         toggle.click(); $('[data-switch]', dialog).click();
+        assert(!dialog.querySelector('[popover]:popover-open'), 'Name demo survived mode switch');
         assert(password.type === 'password' && confirmation.type === 'password' && confirmation.disabled && confirmation.value === '' && confirmation.validationMessage === '', 'Mode switch retained visible password/confirmation error');
         $('.modal-heading button', dialog).click(); assert($('.post') && !dialog.open, 'Closing login blocks feed');
+        $('.home-hero-compose').click(); assert($('#auth-title'), 'Guest hero compose bypassed login'); $('#dialogs dialog').close();
         $('[aria-label="Đăng bài"]').click(); assert($('#auth-title'), 'Guest compose bypassed login'); $('#dialogs dialog').close();
         $('.suggestion button').click(); assert($('#auth-title'), 'Guest follow bypassed login'); $('#dialogs dialog').close();
         for (const page of ['bell', 'mail', 'bookmark', 'user']) { await go('#' + page); assert($('[data-login]') && !$('.thread') && !$('.notification') && !$('.profile-top'), 'Guest sees private data'); }

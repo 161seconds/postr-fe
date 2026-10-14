@@ -255,20 +255,20 @@ home: `
 </button>
 <button class="[font-family:inherit] tab relative [padding:18px_8px] min-h-[52px] [border:0] bg-transparent text-muted font-bold text-[13px] [&amp;:hover]:bg-[#e8dfd140] [&amp;.active]:text-ink [&amp;.active::after]:absolute [&amp;.active::after]:bottom-[-1px] [&amp;.active::after]:left-[50%] [&amp;.active::after]:w-[64px] [&amp;.active::after]:h-[3px] [&amp;.active::after]:rounded-[3px] [&amp;.active::after]:bg-accent [&amp;.active::after]:content-[&#x27;&#x27;] [&amp;.active::after]:[transform:translateX(-50%)] max-[600px]:[padding:16px_8px] " aria-pressed="false">Đang theo dõi</button>
 </div>
-<div class="feed-intro relative [padding:20px_24px_0] [&amp;_&gt;_span]:flex [&amp;_&gt;_span]:items-center [&amp;_&gt;_span]:gap-[7px] [&amp;_&gt;_span]:text-[8px] [&amp;_&gt;_span]:tracking-[1.1px] [&amp;_&gt;_span]:text-muted [&amp;_p]:[margin:7px_0_0] [&amp;_p]:font-serif [&amp;_p]:text-[18px] [&amp;_&gt;_svg]:absolute [&amp;_&gt;_svg]:right-[24px] [&amp;_&gt;_svg]:top-[29px] [&amp;_&gt;_svg]:text-[#aba08f] max-[600px]:hidden">
-<span>
-<span class="live-dot inline-block shrink-0 w-[6px] h-[6px] rounded-full bg-green">
-</span> BẢNG TIN CỦA BẠN</span>
-<p class="[margin:1em_0]">Những câu chuyện đáng dừng lại.</p>
-<svg class="size-[21px] shrink-0 fill-none stroke-current [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+<section class="feed-intro home-hero" aria-labelledby="home-intro-title">
+<div class="home-hero-copy"><p class="home-hero-eyebrow">Mỗi góc nhìn, một câu chuyện</p>
+<h2 id="home-intro-title">Có chuyện hay.<br/>Kể nhau nghe.</h2>
+<p class="home-hero-description">Những điều nhỏ đáng chia sẻ.<br/>Những người mới đáng gặp.</p>
+<button type="button" class="home-hero-compose" aria-label="Đăng bài">Kể chuyện của bạn <span aria-hidden="true">↗</span></button></div>
+<div class="home-hero-art" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="12" cy="12" r="9">
 </circle>
 <ellipse cx="12" cy="12" rx="4" ry="9">
 </ellipse>
 <path d="M3 12h18">
 </path>
-</svg>
-</div>__COMPOSER____POSTS__`,
+</svg></div>
+</section>__COMPOSER____POSTS__`,
 search: `
 <section class="explore-header [padding:28px_24px] [&amp;_h2]:[margin:10px_0_24px] [&amp;_h2]:font-serif [&amp;_h2]:text-[33px] [&amp;_h2]:tracking-[-1px] max-[600px]:[padding:24px_18px]">
 <p class="[margin:1em_0] eyebrow text-[10px] font-bold tracking-[1.6px]">CÓ GÌ MỚI NGOÀI KIA?</p>
