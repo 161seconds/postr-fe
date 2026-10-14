@@ -11,6 +11,27 @@ body{margin:0;line-height:normal;background:radial-gradient(ellipse at 0 0,#ff70
 .admin-mobile{position:fixed;right:1rem;bottom:6rem;z-index:20;padding-inline:1rem;border-color:var(--color-edge);background:var(--color-card);box-shadow:0 1px 2px #0000000d}
 @media(min-width:601px){.admin-mobile{display:none}}
 dialog.modal{margin:auto}
+dialog.auth-dialog{width:min(440px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:28px;border:1px solid var(--color-line);border-radius:22px;box-shadow:0 24px 80px #0005}
+.auth-dialog::backdrop{backdrop-filter:blur(6px)}
+.auth-dialog .modal-heading{align-items:flex-start;gap:16px;padding:0;border:0}
+.auth-dialog .modal-heading h2{font:700 30px/1.2 "serif",serif;letter-spacing:-.5px}
+.auth-dialog #auth-description{margin-top:8px;color:var(--color-muted);font-size:14px;line-height:1.6}
+.auth-dialog .modal-heading .icon-button{margin:-6px -6px 0 0;border:1px solid var(--color-line);border-radius:12px;color:var(--color-muted);font-size:24px;line-height:1}
+.auth-dialog .modal-heading .icon-button:hover{background:var(--color-paper)}
+.auth-form{display:grid;gap:18px;margin-top:26px}
+.auth-form label:not([hidden]){display:grid;gap:8px;font-size:13px;font-weight:700}
+.auth-form input{width:100%;min-width:0;min-height:50px;padding:12px 14px;border:1px solid var(--color-line);border-radius:12px;background:var(--color-paper);color:inherit;font:inherit;font-size:16px;font-weight:400;line-height:1.5}
+.auth-form input::placeholder{color:var(--color-muted);font-size:14px}
+.auth-form input:focus{border-color:var(--color-accent);outline:3px solid color-mix(in srgb,var(--color-accent) 20%,transparent);outline-offset:0}
+.auth-form [role=alert]{padding:10px 12px;border:1px solid var(--color-accent);border-radius:10px;color:var(--color-accent);font-size:13px;line-height:1.6}
+.auth-form [role=alert]:empty{display:none}
+.auth-dialog .post-button{width:100%;min-height:50px;margin:2px 0 0;border:0;border-radius:12px}
+.auth-dialog .post-button:disabled{opacity:.6;cursor:wait}
+.auth-switch{margin-top:16px;color:var(--color-muted);font-size:13px;text-align:center}
+.auth-switch button{min-height:44px;padding:0 4px;border-radius:6px;background:transparent;color:var(--color-accent);font:inherit;font-size:13px;font-weight:700}
+.auth-switch button:hover{text-decoration:underline;text-underline-offset:4px}
+:root[data-theme=light] .auth-switch button,:root[data-theme=light] .auth-form [role=alert]{color:#b63e1d}
+@media(max-width:600px){dialog.auth-dialog{padding:24px}.auth-dialog .modal-heading h2{font-size:28px}}
 :root .auth-page{min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center}
 .auth-page>section{max-width:420px;padding:32px;background:var(--color-card);border:1.5px solid var(--color-edge);border-radius:18px}
 .auth-page h1{font:700 36px "serif",serif}.auth-page p{margin:16px 0 24px;color:var(--color-muted);font-size:14px}

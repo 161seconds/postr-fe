@@ -26,6 +26,7 @@ catch { }
 const drafts = new Map();
 const imageDrafts = new Map();
 const replying = new Set();
+const pendingReplies = new Set();
 let adminPage = 1, adminSearch = '', adminStatus = 'ALL', adminPosts = [];
 let feedPage = 1, stateVersion = 0, feedLoading = false, feedContext = '';
 const feedObserver = new IntersectionObserver(entries => {
@@ -114,7 +115,17 @@ function feedEndHTML() {
     return `<p class="${cl('feed-end')}" data-feed-more role="status">${feedPage < state.pagination?.totalPages ? 'Cuộn xuống để xem thêm bài.' : 'Bạn đã bắt kịp những câu chuyện mới nhất.<br><span>Ghé lại sau, hoặc kể câu chuyện của riêng bạn.</span>'}</p>`;
 }
 function requireLogin() { if (state.profile) return true; login(); return false; }
-function mutate(path, method = 'POST', body) { if (!requireLogin()) return Promise.reject(new Error('Vui lòng đăng nhập.')); const next = saves.then(async () => { await request(path, method, body); if (path === '/api/posts') { feedPage = 1; followingTab = false; } await refreshState(); }); saves = next.catch(() => { }); return next.catch(error => { notice(error.message); throw error; }); }
+function mutate(path, method = 'POST', body) {
+    if (!requireLogin()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    const next = saves.then(async () => {
+        await request(path, method, body);
+        if (path === '/api/posts') { feedPage = 1; followingTab = false; }
+        try { await refreshState(); return true; }
+        catch (error) { notice(`Đã lưu thay đổi. Chưa tải lại được dữ liệu: ${error.message}`); return false; }
+    });
+    saves = next.catch(() => { });
+    return next.catch(error => { notice(error.message); throw error; });
+}
 function fire(path, method, body) { mutate(path, method, body).catch(() => { }); }
 function route() { const [name = 'home', parameter = ''] = (location.hash.slice(1) || 'home').split('/'); let query = parameter; try {
     query = decodeURIComponent(parameter);
@@ -314,8 +325,7 @@ function render() {
             input.reportValidity();
             return;
         } try {
-            await mutate('/api/profile', 'PUT', data);
-            notice('Đã cập nhật hồ sơ.');
+            if (await mutate('/api/profile', 'PUT', data)) notice('Đã cập nhật hồ sơ.');
         }
         catch { } };
         $('[name=name]', dialog).oninput = event => event.target.setCustomValidity('');
@@ -355,11 +365,23 @@ function setupPosts(root = document) { $$('.post', root).forEach(node => { const
     replying.delete(id);
     button.setAttribute('aria-expanded', false);
     return;
-} replying.add(id); button.setAttribute('aria-expanded', true); $('.actions', node).insertAdjacentHTML('afterend', `<section class="${cl('replies')}" aria-label="Bình luận bài đăng">${post.replies.map((copy, index) => `<div class="${cl('reply')}">${avatar(post.replyAuthors?.[index] || post.author)}<p><strong>${escape(post.replyAuthors?.[index]?.name || post.author.name)}</strong><br>${escape(copy)}</p></div>`).join('')}${state.profile ? `<form class="${cl('reply-form')}"><input aria-label="Nội dung bình luận" placeholder="Viết bình luận…" maxlength="280" required><button class="${cl('icon-button')}" aria-label="Gửi bình luận">↗</button></form>` : `<button class="${cl('follow')}" data-login>Đăng nhập để bình luận</button>`}</section>`); replies = $('.replies', node); const form = $('form', replies); if (!form) { $('[data-login]', replies).onclick = login; return; } form.onsubmit = async (event) => { event.preventDefault(); const copy = $('input', replies).value.trim(); if (copy)
-    try {
-        await mutate(`/api/posts/${id}/replies`, 'POST', { copy });
-    }
-    catch { } }; $('input', replies).focus(); }); if (replying.has(id)) $('[data-action=reply]', node).click(); }); }
+} replying.add(id); button.setAttribute('aria-expanded', true); $('.actions', node).insertAdjacentHTML('afterend', `<section class="${cl('replies')}" aria-label="Bình luận bài đăng">${post.replies.map((copy, index) => `<div class="${cl('reply')}">${avatar(post.replyAuthors?.[index] || post.author)}<p><strong>${escape(post.replyAuthors?.[index]?.name || post.author.name)}</strong><br>${escape(copy)}</p></div>`).join('')}${state.profile ? `<form class="${cl('reply-form')}"><input aria-label="Nội dung bình luận" placeholder="Viết bình luận…" maxlength="280" required><button class="${cl('icon-button')}" aria-label="Gửi bình luận">↗</button></form>` : `<button class="${cl('follow')}" data-login>Đăng nhập để bình luận</button>`}</section>`); replies = $('.replies', node); const form = $('form', replies); if (!form) { $('[data-login]', replies).onclick = login; return; }
+    const input = $('input', form), submit = $('button', form);
+    input.value = drafts.get(id) || '';
+    input.oninput = () => drafts.set(id, input.value);
+    input.disabled = submit.disabled = pendingReplies.has(id);
+    form.onsubmit = async event => {
+        event.preventDefault();
+        const copy = input.value.trim();
+        if (!copy || pendingReplies.has(id)) return;
+        pendingReplies.add(id); input.disabled = submit.disabled = true;
+        try {
+            await mutate(`/api/posts/${id}/replies`, 'POST', { copy });
+            drafts.delete(id);
+        } catch { }
+        finally { pendingReplies.delete(id); render(); }
+    };
+    input.focus(); }); if (replying.has(id)) $('[data-action=reply]', node).click(); }); }
 function setupComposer(form) {
     if (!form) return;
     const key = form.closest('dialog') ? 'modal' : 'home';
@@ -411,9 +433,10 @@ function setupComposer(form) {
         if ((!textarea.value.trim() && !image) || textarea.value.length > 280 || submit.disabled) return;
         submit.disabled = true;
         try {
-            await mutate('/api/posts', 'POST', { copy: textarea.value.trim(), ...(image ? { image } : {}) });
+            const refreshed = await mutate('/api/posts', 'POST', { copy: textarea.value.trim(), ...(image ? { image } : {}) });
             drafts.delete(key); imageDrafts.delete(key); $('#dialogs').replaceChildren(); followingTab = false;
-            if (route().name === 'home') render(); else location.hash = 'home'; notice('Đã thêm bài đăng vào bảng tin.');
+            if (route().name === 'home') render(); else location.hash = 'home';
+            if (refreshed) notice('Đã thêm bài đăng vào bảng tin.');
         } catch { update(); }
     };
 }
@@ -448,16 +471,18 @@ function setupMail() {
         main.insertAdjacentHTML('beforeend', `<section class="${cl('conversation')}"><header class="${cl('conversation-header')}"><button class="${cl('icon-button')}" aria-label="Trở lại hộp thư">‹</button>${avatar(person)}<div><strong>${escape(person.name)}</strong><small>${escape(person.handle)}</small></div></header><div class="${cl('message-history')}" role="log" aria-label="Hội thoại với ${escape(person.name)}"><p class="${cl('conversation-date')}">HỘI THOẠI</p>${(state.threads[selected] || []).map(message => `<div class="${cl('message')} ${message.mine ? 'mine' : ''}"><p>${escape(message.copy)}</p><small>${message.mine ? 'Bạn · Đã lưu' : escape(person.name)}</small></div>`).join('')}</div><form class="${cl('message-form')}"><textarea class="${cl('w-full')}" aria-label="Nội dung tin nhắn" placeholder="Viết một lời nhắn…" maxlength="1000" rows="2" required></textarea><button class="${cl('post-button')}" aria-label="Gửi tin nhắn">↗</button></form><p class="${cl('demo-note')}">Tin nhắn chỉ hiển thị với người tham gia cuộc trò chuyện.</p></section>`);
         $$('.inbox-intro,.thread,.demo-note', main).filter(n => !n.closest('.conversation')).forEach(n => n.remove());
         $('.conversation-header button').onclick = () => { selected = null; render(); };
-        const form = $('.message-form'), textarea = $('textarea', form);
+        const form = $('.message-form'), textarea = $('textarea', form), submit = $('button', form);
         textarea.value = drafts.get(selected) || '';
         textarea.oninput = () => drafts.set(selected, textarea.value);
-        form.onsubmit = async (event) => { event.preventDefault(); const handle = selected, copy = textarea.value.trim(); if (copy)
+        form.onsubmit = async (event) => { event.preventDefault(); const handle = selected, copy = textarea.value.trim(); if (!copy || submit.disabled) return;
+            submit.disabled = true;
             try {
                 await mutate(`/api/messages/${encodeURIComponent(handle)}`, 'POST', { copy });
                 drafts.delete(handle);
                 render();
             }
-            catch { } };
+            catch { }
+            finally { submit.disabled = false; } };
         const log = $('.message-history');
         log.scrollTop = log.scrollHeight;
         return;
@@ -474,18 +499,23 @@ function setupMail() {
     $('.inbox-intro input').oninput = event => { const search = normalize(event.target.value); $$('.thread').forEach(button => button.hidden = !normalize(button.textContent).includes(search)); };
 }
 async function login() {
-    const dialog = document.createElement('dialog'); dialog.className = cl('modal'); dialog.setAttribute('aria-labelledby', 'auth-title');
-    dialog.innerHTML = `<div class="${cl('modal-heading')}"><h2 id="auth-title">Đăng nhập</h2><button class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="${cl('profile-form')}"><label data-register hidden>Tên hiển thị<input name="displayName" maxlength="50"></label><label data-register hidden>Tên người dùng<input name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username"></label><label><span data-login-label>Tên đăng nhập hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username"></label><label>Mật khẩu<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password"></label><p role="alert" class="text-accent"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button><button class="${cl('text-button')}" type="button" data-switch>Chưa có tài khoản? Đăng ký</button></form>`;
+    const dialog = document.createElement('dialog'); dialog.className = cl('modal') + ' auth-dialog'; dialog.setAttribute('aria-labelledby', 'auth-title'); dialog.setAttribute('aria-describedby', 'auth-description');
+    dialog.innerHTML = `<div class="${cl('modal-heading')}"><div><h2 id="auth-title">Đăng nhập</h2><p id="auth-description">Tiếp tục những câu chuyện của bạn.</p></div><button type="button" class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="auth-form"><label data-register hidden>Tên hiển thị<input name="displayName" maxlength="50" autocomplete="name" placeholder="Tên bạn muốn mọi người biết"></label><label data-register hidden>Tên người dùng<input name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="Ví dụ: minh_anh"></label><label><span data-login-label>Tên đăng nhập hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username" placeholder="Tên người dùng hoặc email" autofocus></label><label>Mật khẩu<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Nhập mật khẩu của bạn"></label><p role="alert"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button></form><p class="auth-switch"><span data-switch-copy>Chưa có tài khoản?</span> <button type="button" data-switch>Đăng ký</button></p>`;
     $('#dialogs').replaceChildren(dialog); $('.modal-heading button', dialog).onclick = () => dialog.close();
     let register = false; const form = $('form', dialog); $$('[data-register] input', dialog).forEach(input => input.disabled = true);
     $('[data-switch]', dialog).onclick = () => {
         register = !register;
         $$('[data-register]', dialog).forEach(label => { label.hidden = !register; $('input', label).required = register; $('input', label).disabled = !register; });
         $('#auth-title').textContent = register ? 'Đăng ký' : 'Đăng nhập'; $('[type=submit]', form).textContent = register ? 'Đăng ký' : 'Đăng nhập';
-        $('[data-switch]', dialog).textContent = register ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký';
+        $('#auth-description', dialog).textContent = register ? 'Một tài khoản, nhiều câu chuyện mới.' : 'Tiếp tục những câu chuyện của bạn.';
+        $('[data-switch-copy]', dialog).textContent = register ? 'Đã có tài khoản?' : 'Chưa có tài khoản?';
+        $('[data-switch]', dialog).textContent = register ? 'Đăng nhập' : 'Đăng ký';
+        $('[role=alert]', form).textContent = '';
         $('[name=password]', form).autocomplete = register ? 'new-password' : 'current-password';
         $('[data-login-label]', dialog).textContent = register ? 'Email' : 'Tên đăng nhập hoặc email';
         const email = $('[name=email]', dialog); email.type = register ? 'email' : 'text'; email.autocomplete = register ? 'email' : 'username';
+        email.placeholder = register ? 'ban@example.com' : 'Tên người dùng hoặc email';
+        $(register ? '[name=displayName]' : '[name=email]', form).focus();
     };
     form.onsubmit = async (event) => { event.preventDefault(); const button = $('[type=submit]', form); button.disabled = true; try {
     const body = Object.fromEntries(new FormData(form));
