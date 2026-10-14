@@ -500,9 +500,33 @@ function setupMail() {
 }
 async function login() {
     const dialog = document.createElement('dialog'); dialog.className = cl('modal') + ' auth-dialog'; dialog.setAttribute('aria-labelledby', 'auth-title'); dialog.setAttribute('aria-describedby', 'auth-description');
-    dialog.innerHTML = `<div class="${cl('modal-heading')}"><div><h2 id="auth-title">Đăng nhập</h2><p id="auth-description">Tiếp tục những câu chuyện của bạn.</p></div><button type="button" class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="auth-form"><label data-register hidden>Tên hiển thị<input name="displayName" maxlength="50" autocomplete="name" placeholder="Tên bạn muốn mọi người biết"></label><label data-register hidden>Tên người dùng<input name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="Ví dụ: minh_anh"></label><label><span data-login-label>Tên đăng nhập hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username" placeholder="Tên người dùng hoặc email" autofocus></label><label>Mật khẩu<input name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Nhập mật khẩu của bạn"></label><p role="alert"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button></form><p class="auth-switch"><span data-switch-copy>Chưa có tài khoản?</span> <button type="button" data-switch>Đăng ký</button></p>`;
+    const eye = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><path class="password-slash" d="m3 3 18 18"/></svg>';
+    dialog.innerHTML = `<div class="auth-layout">
+        <aside class="auth-story" aria-hidden="true">
+            <span class="auth-wordmark">postr.</span>
+            <div><p class="auth-story-title">Chuyện nhỏ.<br> Kết nối lớn.</p><p class="auth-story-copy">Một góc nhỏ cho những điều bạn muốn kể.</p></div>
+            <svg class="auth-art" viewBox="0 0 280 240" fill="none">
+                <ellipse cx="140" cy="120" rx="132" ry="80" transform="rotate(-30 140 120)" stroke="#24221f" stroke-opacity=".25"/>
+                <ellipse cx="140" cy="120" rx="132" ry="80" transform="rotate(30 140 120)" stroke="#24221f" stroke-opacity=".25"/>
+                <g transform="rotate(-8 140 120)"><path d="M62 53h156a15 15 0 0 1 15 15v97a15 15 0 0 1-15 15H103l-32 24v-24h-9a15 15 0 0 1-15-15V68a15 15 0 0 1 15-15Z" fill="#fff3df" stroke="#24221f" stroke-width="1.5"/><text x="67" y="142" fill="#24221f" font-family="serif" font-size="106">“</text><path d="M140 110h60m-60 15h44m-44 15h52" stroke="#24221f" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/></g>
+                <g transform="rotate(10 220 174)"><path d="M191 149h53a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10h-7v12l-17-12h-29a10 10 0 0 1-10-10v-28a10 10 0 0 1 10-10Z" fill="#24221f"/><circle cx="201" cy="173" r="3" fill="#fff3df"/><circle cx="217" cy="173" r="3" fill="#fff3df"/><circle cx="233" cy="173" r="3" fill="#fff3df"/></g>
+                <circle cx="41" cy="83" r="8" fill="#24221f"/><path d="m238 28 3 12 12 3-12 3-3 12-3-12-12-3 12-3Z" fill="#24221f"/>
+            </svg>
+            <p class="auth-story-footer">Viết. Chia sẻ. Tìm thấy nhau.</p>
+        </aside>
+        <section class="auth-content"><div class="${cl('modal-heading')}"><div><p class="auth-eyebrow">Góc nhỏ của bạn</p><h2 id="auth-title">Đăng nhập</h2><p id="auth-description">Tiếp tục những câu chuyện của bạn.</p></div><button type="button" class="${cl('icon-button')}" aria-label="Đóng đăng nhập">×</button></div><form class="auth-form"><label data-register hidden>Tên hiển thị<input name="displayName" maxlength="50" autocomplete="name" placeholder="Tên bạn muốn mọi người biết"></label><label data-register hidden>Tên người dùng<input name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" placeholder="Ví dụ: minh_anh"></label><label><span data-login-label>Tên đăng nhập hoặc email</span><input name="email" type="text" required maxlength="254" autocomplete="username" placeholder="Tên người dùng hoặc email" autofocus></label><div class="auth-password"><label for="auth-password">Mật khẩu</label><div class="password-input"><input id="auth-password" name="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="Nhập mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu" aria-controls="auth-password" aria-label="Hiện mật khẩu" aria-pressed="false">${eye}</button></div></div><div class="auth-password" data-register hidden><label for="auth-confirm-password">Nhập lại mật khẩu</label><div class="password-input"><input id="auth-confirm-password" name="confirmPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Nhập lại mật khẩu của bạn"><button type="button" class="password-toggle" data-password-toggle="mật khẩu nhập lại" aria-controls="auth-confirm-password" aria-label="Hiện mật khẩu nhập lại" aria-pressed="false">${eye}</button></div></div><p role="alert"></p><button class="${cl('post-button')}" type="submit">Đăng nhập</button></form><p class="auth-switch"><span data-switch-copy>Chưa có tài khoản?</span> <button type="button" data-switch>Đăng ký</button></p></section>
+    </div>`;
     $('#dialogs').replaceChildren(dialog); $('.modal-heading button', dialog).onclick = () => dialog.close();
     let register = false; const form = $('form', dialog); $$('[data-register] input', dialog).forEach(input => input.disabled = true);
+    const password = $('[name=password]', form), confirmation = $('[name=confirmPassword]', form);
+    const validatePasswords = () => confirmation.setCustomValidity(register && confirmation.value !== password.value ? 'Mật khẩu nhập lại không khớp.' : '');
+    password.oninput = confirmation.oninput = validatePasswords;
+    $$('[data-password-toggle]', form).forEach(button => button.onclick = () => {
+        const input = $('#' + button.getAttribute('aria-controls'), form), visible = input.type === 'password';
+        input.type = visible ? 'text' : 'password';
+        button.setAttribute('aria-pressed', visible);
+        button.setAttribute('aria-label', `${visible ? 'Ẩn' : 'Hiện'} ${button.dataset.passwordToggle}`);
+    });
     $('[data-switch]', dialog).onclick = () => {
         register = !register;
         $$('[data-register]', dialog).forEach(label => { label.hidden = !register; $('input', label).required = register; $('input', label).disabled = !register; });
@@ -511,14 +535,17 @@ async function login() {
         $('[data-switch-copy]', dialog).textContent = register ? 'Đã có tài khoản?' : 'Chưa có tài khoản?';
         $('[data-switch]', dialog).textContent = register ? 'Đăng nhập' : 'Đăng ký';
         $('[role=alert]', form).textContent = '';
+        confirmation.value = ''; validatePasswords();
+        $$('[data-password-toggle][aria-pressed=true]', form).forEach(button => button.click());
         $('[name=password]', form).autocomplete = register ? 'new-password' : 'current-password';
         $('[data-login-label]', dialog).textContent = register ? 'Email' : 'Tên đăng nhập hoặc email';
         const email = $('[name=email]', dialog); email.type = register ? 'email' : 'text'; email.autocomplete = register ? 'email' : 'username';
         email.placeholder = register ? 'ban@example.com' : 'Tên người dùng hoặc email';
         $(register ? '[name=displayName]' : '[name=email]', form).focus();
     };
-    form.onsubmit = async (event) => { event.preventDefault(); const button = $('[type=submit]', form); button.disabled = true; try {
+    form.onsubmit = async (event) => { event.preventDefault(); validatePasswords(); if (!form.reportValidity()) return; const button = $('[type=submit]', form); button.disabled = true; try {
     const body = Object.fromEntries(new FormData(form));
+    delete body.confirmPassword;
     if (!register) {
         delete body.displayName;
         delete body.username;

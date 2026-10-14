@@ -45,11 +45,12 @@
     let anonymousWrites = 0, expireNext = false, delayPage = false, failPage = false;
     let failRefresh = false, failWrite = false, delayReply = false;
     const writes = { posts: 0, replies: 0, messages: 0, profiles: 0 };
-    const stateRequests = [];
+    const stateRequests = [], authRequests = [];
     let adminPost = { id: 'b'.repeat(24), author: { displayName: 'Real Author', username: 'author' }, content: 'Real moderated post <img>', status: 'ACTIVE', stats: { likes: 0 }, createdAt: '2026-10-13T00:00:00Z' };
     window.fetch = async (url, options = {}) => {
       const body = options.body ? JSON.parse(options.body) : {};
       if (url === '/api/v1/auth/login' || url === '/api/v1/auth/register') {
+        authRequests.push({ url, body });
         state = structuredClone(fixture); state.profile.name = 'Test Account'; state.profile.role = 'USER';
         return new Response(JSON.stringify({ accessToken: 'test-token', user: { displayName: 'Test Account' } }));
       }
@@ -189,18 +190,40 @@
         const dialog = $('#dialogs dialog'), box = dialog.getBoundingClientRect();
         assert(dialog.open && Math.abs(box.x + box.width / 2 - innerWidth / 2) < 1 && Math.abs(box.y + box.height / 2 - innerHeight / 2) < 1, 'Login dialog not centered');
         assert(box.x >= 0 && box.y >= 0 && box.right <= innerWidth && box.bottom <= innerHeight, 'Login dialog overflows');
+        const password = $('[name=password]', dialog), confirmation = $('[name=confirmPassword]', dialog), toggle = $('[aria-controls=auth-password]', dialog);
+        password.value = 'Test-password-123'; toggle.click();
+        assert(password.type === 'text' && password.value === 'Test-password-123' && toggle.getAttribute('aria-pressed') === 'true' && toggle.getAttribute('aria-label') === 'Ẩn mật khẩu', 'Password reveal changed value/state');
+        toggle.click(); assert(password.type === 'password' && toggle.getAttribute('aria-pressed') === 'false', 'Password hide failed');
+        assert(confirmation.disabled && confirmation.closest('[data-register]').hidden, 'Login requires password confirmation');
         $('[data-switch]', dialog).click(); const registerBox = dialog.getBoundingClientRect();
         assert(Math.abs(registerBox.y + registerBox.height / 2 - innerHeight / 2) < 1 && dialog.scrollHeight >= dialog.clientHeight, 'Register dialog not centered/scrollable');
+        const registerForm = $('form', dialog);
+        assert(confirmation.required && !confirmation.disabled && !confirmation.closest('[data-register]').hidden, 'Register confirmation missing');
+        $('[name=displayName]', dialog).value = 'Check'; $('[name=username]', dialog).value = 'check'; $('[name=email]', dialog).value = 'check@example.com';
+        confirmation.value = 'Different-password-123'; confirmation.dispatchEvent(new Event('input'));
+        registerForm.requestSubmit(); registerForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(resolve => setTimeout(resolve, 20));
+        assert(!confirmation.validity.valid && authRequests.length === 0, 'Mismatched passwords reached API');
+        confirmation.value = password.value; confirmation.dispatchEvent(new Event('input')); assert(confirmation.validity.valid, 'Matching confirmation remains invalid');
+        password.value += 'x'; password.dispatchEvent(new Event('input')); assert(!confirmation.validity.valid, 'Editing password bypassed confirmation');
+        confirmation.value = password.value; confirmation.dispatchEvent(new Event('input'));
+        const confirmToggle = $('[aria-controls=auth-confirm-password]', dialog); confirmToggle.click();
+        assert(confirmation.type === 'text' && confirmation.value === password.value && confirmToggle.getAttribute('aria-label') === 'Ẩn mật khẩu nhập lại', 'Confirmation reveal failed');
+        toggle.click(); $('[data-switch]', dialog).click();
+        assert(password.type === 'password' && confirmation.type === 'password' && confirmation.disabled && confirmation.value === '' && confirmation.validationMessage === '', 'Mode switch retained visible password/confirmation error');
         $('.modal-heading button', dialog).click(); assert($('.post') && !dialog.open, 'Closing login blocks feed');
         $('[aria-label="Đăng bài"]').click(); assert($('#auth-title'), 'Guest compose bypassed login'); $('#dialogs dialog').close();
         $('.suggestion button').click(); assert($('#auth-title'), 'Guest follow bypassed login'); $('#dialogs dialog').close();
         for (const page of ['bell', 'mail', 'bookmark', 'user']) { await go('#' + page); assert($('[data-login]') && !$('.thread') && !$('.notification') && !$('.profile-top'), 'Guest sees private data'); }
         assert(anonymousWrites === 0 && state.interactions.like.length === 0, 'Guest sent a write');
-        await go('#home'); $('.heading-actions [data-login]').click(); const form = $('#dialogs form'); $('[name=email]', form).value = 'check'; $('[name=password]', form).value = 'Test-password-123'; form.requestSubmit();
+        await go('#home'); $('.heading-actions [data-login]').click(); const form = $('#dialogs form'); $('[data-switch]').click();
+        $('[name=displayName]', form).value = 'Check'; $('[name=username]', form).value = 'check'; $('[name=email]', form).value = 'check@example.com';
+        $('[name=password]', form).value = $('[name=confirmPassword]', form).value = 'Test-password-123'; $('[name=confirmPassword]', form).dispatchEvent(new Event('input')); form.requestSubmit();
         await wait(() => $('.composer')); $('.composer textarea').value = 'Expired account draft'; $('.composer textarea').dispatchEvent(new Event('input'));
+        assert(authRequests.at(-1).url === '/api/v1/auth/register' && !('confirmPassword' in authRequests.at(-1).body), 'Confirmation changed API payload');
         expireNext = true; $('.post [data-action=like]').click(); await wait(() => $('.heading-actions [data-login]'));
         assert($('.post') && !$('.composer') && !$('.conversation') && !$('#dialogs dialog'), 'Expired token did not return to public feed');
-        $('#check-result').textContent = 'PASS: public feed/search/comments, guarded actions, centered dialogs, private data, expired token.';
+        $('#check-result').textContent = 'PASS: public feed/search/comments, guarded actions, password visibility/confirmation, centered dialogs, private data, expired token.';
       } else {
         await wait(() => $('.post'));
         await document.fonts.ready;
