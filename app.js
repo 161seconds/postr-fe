@@ -6,20 +6,14 @@ const cl = name => name === 'w-full' ? 'w-full min-h-[66px] resize-y border-0 bg
 const icon = name => { const post = document.createElement('template'); post.innerHTML = templates.shell; return $(`[aria-label="${{ home: 'Trang chủ', search: 'Khám phá', bell: 'Thông báo', mail: 'Tin nhắn', bookmark: 'Đã lưu', user: 'Hồ sơ', pen: 'Đăng bài' }[name]}"] svg`, post.content)?.outerHTML || '<span aria-hidden="true">↗</span>'; };
 const avatar = person => `<span aria-hidden="true" class="${cl('avatar')} ${escape(person.tone)}">${escape(person.initial)}</span>`;
 const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLocaleLowerCase('vi');
-export const filterPosts = (posts, query = '', topic = 'Tất cả') => posts.filter(p => (topic === 'Tất cả' || p.topic === topic) && normalize(`${p.copy} ${p.quote || ''} ${p.author.name} ${p.author.handle}`).includes(normalize(query.trim())));
 // Open /?check for the native browser self-check; no test framework or build step.
 function selfCheck() {
-    const posts = [{ id: 1, copy: 'Một góc Hội An #VietnamNow', topic: 'Đời sống', author: { name: 'Mê Việt Nam', handle: '@mevietnam' } }, { id: 2, copy: 'AI tạo sinh', quote: 'Đúng hơn', topic: 'Công nghệ', author: { name: 'Tech Daily', handle: '@techdaily' } }];
     const assert = (value, message) => { if (!value)
         throw new Error(`Frontend check: ${message}`); };
-    assert(filterPosts(posts, ' HOI AN ')[0]?.id === 1, 'Vietnamese accents');
-    assert(filterPosts(posts, 'dung hon')[0]?.id === 2, 'quote search');
-    assert(filterPosts(posts, '@TECHDAILY')[0]?.id === 2, 'author search');
-    assert(filterPosts(posts, 'AI', 'Đời sống').length === 0, 'topic filter');
-    assert(filterPosts(posts, 'missing').length === 0, 'empty results');
+    assert(normalize('Hội An ĐÚNG') === 'hoi an dung', 'Vietnamese inbox search');
     assert(escape('<img src=x onerror="alert(1)">').includes('&lt;img'), 'HTML escaping');
     assert(!templates.shell.includes('_next'), 'framework-free template');
-    console.log('Frontend checks passed: accents, authors, quotes, topics, empty results, escaping.');
+    console.log('Frontend checks passed: inbox search, escaping, framework-free template.');
 }
 if (new URLSearchParams(location.search).has('check'))
     selfCheck();

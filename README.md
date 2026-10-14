@@ -10,7 +10,7 @@ Giao diện dùng HTML, CSS và JavaScript thuần. Flask trong `../postr-be` ph
 
 Khởi động backend theo README trong `../postr-be`, rồi mở URL Flask. Khách đọc bảng tin, tìm kiếm và xem bình luận mà không cần đăng nhập. Đăng nhập để đăng bài, tương tác, theo dõi, xem dữ liệu cá nhân hoặc nhắn tin. Các trang `/admin` và `/admin/posts` chỉ cho tài khoản `ADMIN`: thống kê, tìm kiếm, phân trang và ẩn/khôi phục gọi API thật; trạng thái giữ qua tải lại trang. Tài khoản thường không thấy link quản trị.
 
-Mở `/?check` để chạy kiểm tra JavaScript trong trình duyệt. Console phải có `Frontend checks passed`. Kiểm tra bao gồm tìm kiếm không dấu, tác giả, trích dẫn, chủ đề, kết quả rỗng và escape HTML.
+Mở `/?check` để chạy kiểm tra JavaScript trong trình duyệt. Console phải có `Frontend checks passed`. Kiểm tra bao gồm tìm hộp thư không dấu, escape HTML và template không cần framework. Tìm bài viết, tác giả, trích dẫn và chủ đề được kiểm tra ở backend trong `tests_ui.py`.
 
 Mở `/check.html` để kiểm tra màu/font, responsive, draft, biểu cảm, thông báo/hội thoại, escape HTML và tách dữ liệu giữa các tài khoản. Mở `/check.html?guest` để kiểm tra đọc bài không đăng nhập, thao tác được bảo vệ, căn giữa dialog và token hết hạn. Mở `/check.html?pagination` để kiểm tra cuộn tự tải đủ 100 bài, giữ vị trí cuộn và draft, dừng khi hết bài, thử lại sau lỗi mạng, tương tác, tìm kiếm, bộ lọc, liên kết bài và phản hồi đến muộn. Mở `/check.html?admin` để kiểm tra kiểm duyệt, bộ lọc, validation và đăng xuất. Các trang kiểm tra dùng fixture riêng trong bộ nhớ, không ghi dữ liệu backend.
 

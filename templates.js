@@ -167,33 +167,6 @@ shell: `
 </div>
 <span aria-hidden="true">↗</span>
 </a>
-<a class="trend flex items-start gap-[10px] [padding:13px_16px] [border-top:1px_solid_var(--color-line)] [&amp;:hover]:bg-[light-dark(#fff5e6,_#2d2821)] [&amp;_&gt;_span:last-child]:ml-auto [&amp;_&gt;_span:last-child]:text-[#a59886] [&amp;_&gt;_span:last-child]:text-[14px] [&amp;_small]:text-muted [&amp;_small]:text-[11px] [&amp;_strong]:block [&amp;_strong]:[margin:4px_0] [&amp;_strong]:text-[14px]" href="#search/AI">
-<span class="trend-rank mt-[2px] text-[#b1a38d] text-[10px]">02</span>
-<div>
-<small class="text-xs">Công nghệ · Nổi bật</small>
-<strong>AI tạo sinh</strong>
-<small class="text-xs">9.584 bài đăng</small>
-</div>
-<span aria-hidden="true">↗</span>
-</a>
-<a class="trend flex items-start gap-[10px] [padding:13px_16px] [border-top:1px_solid_var(--color-line)] [&amp;:hover]:bg-[light-dark(#fff5e6,_#2d2821)] [&amp;_&gt;_span:last-child]:ml-auto [&amp;_&gt;_span:last-child]:text-[#a59886] [&amp;_&gt;_span:last-child]:text-[14px] [&amp;_small]:text-muted [&amp;_small]:text-[11px] [&amp;_strong]:block [&amp;_strong]:[margin:4px_0] [&amp;_strong]:text-[14px]" href="#search/U23">
-<span class="trend-rank mt-[2px] text-[#b1a38d] text-[10px]">03</span>
-<div>
-<small class="text-xs">Thể thao · Được quan tâm</small>
-<strong>U23 Việt Nam</strong>
-<small class="text-xs">25,1K bài đăng</small>
-</div>
-<span aria-hidden="true">↗</span>
-</a>
-<a class="trend flex items-start gap-[10px] [padding:13px_16px] [border-top:1px_solid_var(--color-line)] [&amp;:hover]:bg-[light-dark(#fff5e6,_#2d2821)] [&amp;_&gt;_span:last-child]:ml-auto [&amp;_&gt;_span:last-child]:text-[#a59886] [&amp;_&gt;_span:last-child]:text-[14px] [&amp;_small]:text-muted [&amp;_small]:text-[11px] [&amp;_strong]:block [&amp;_strong]:[margin:4px_0] [&amp;_strong]:text-[14px]" href="#search/%23IndieViet">
-<span class="trend-rank mt-[2px] text-[#b1a38d] text-[10px]">04</span>
-<div>
-<small class="text-xs">Âm nhạc · Xu hướng</small>
-<strong>#IndieViet</strong>
-<small class="text-xs">4.620 bài đăng</small>
-</div>
-<span aria-hidden="true">↗</span>
-</a>
 </section>
 <section class="side-card mt-[23px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-[18px] bg-card shadow-[4px_4px_0_var(--color-shadow)]">
 <h2 class="font-bold side-title flex items-center justify-between m-0 [padding:18px_17px] font-serif text-[19px] tracking-[-.5px]">Có thể bạn biết</h2>
@@ -205,23 +178,6 @@ shell: `
 <small class="text-xs">@mevietnam</small>
 </div>
 <button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-label="Theo dõi Mê Việt Nam" aria-pressed="false">Theo dõi</button>
-</div>
-<div class="suggestion [&amp;_small]:text-muted [&amp;_small]:text-[11px] grid grid-cols-[33px_minmax(0,_1fr)_auto] items-center gap-[8px] [padding:13px_14px] [border-top:1px_solid_var(--color-line)] [&amp;_.avatar]:w-[33px] [&amp;_.avatar]:h-[33px] [&amp;_.avatar]:text-[16px] [&amp;_strong]:block [&amp;_strong]:overflow-hidden [&amp;_strong]:text-ellipsis [&amp;_strong]:whitespace-nowrap [&amp;_strong]:text-[12px] [&amp;_.verified]:w-[11px] [&amp;_.verified]:h-[11px] [&amp;_.verified]:text-[8px] max-[1130px]:px-[10px] max-[1130px]:gap-[6px]">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] black ">T</span>
-<div>
-<strong title="Tech Daily">Tech Daily <span class="verified inline-grid align-middle shrink-0 place-items-center w-[13px] h-[13px] rounded-full bg-blue text-card text-[9px]" aria-label="Đã xác minh">✓</span>
-</strong>
-<small class="text-xs">@techdaily</small>
-</div>
-<button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-label="Theo dõi Tech Daily" aria-pressed="false">Theo dõi</button>
-</div>
-<div class="suggestion [&amp;_small]:text-muted [&amp;_small]:text-[11px] grid grid-cols-[33px_minmax(0,_1fr)_auto] items-center gap-[8px] [padding:13px_14px] [border-top:1px_solid_var(--color-line)] [&amp;_.avatar]:w-[33px] [&amp;_.avatar]:h-[33px] [&amp;_.avatar]:text-[16px] [&amp;_strong]:block [&amp;_strong]:overflow-hidden [&amp;_strong]:text-ellipsis [&amp;_strong]:whitespace-nowrap [&amp;_strong]:text-[12px] [&amp;_.verified]:w-[11px] [&amp;_.verified]:h-[11px] [&amp;_.verified]:text-[8px] max-[1130px]:px-[10px] max-[1130px]:gap-[6px]">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] green ">L</span>
-<div>
-<strong title="Linh Trần">Linh Trần </strong>
-<small class="text-xs">@linhtran</small>
-</div>
-<button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-label="Theo dõi Linh Trần" aria-pressed="false">Theo dõi</button>
 </div>
 <a class="side-more flex justify-between [border-top:1px_solid_var(--color-line)] [padding:13px_17px] text-blue text-[11px]" href="#search">Khám phá thêm <span aria-hidden="true">↗</span>
 </a>
@@ -341,11 +297,6 @@ search: `
 <strong>#ChaoThangMoi</strong>
 <small class="text-xs">18,2K bài đăng ↗</small>
 </button>
-<button class="[font-family:inherit]">
-<span>02 / ĐƯỢC QUAN TÂM</span>
-<strong>AI tạo sinh</strong>
-<small class="text-xs">9.584 bài đăng ↗</small>
-</button>
 </div>
 <section class="people-section [padding:0_24px_24px] [&amp;_h3]:font-serif [&amp;_h3]:text-[19px] max-[600px]:px-[18px]">
 <h3 class="[margin:1em_0] font-bold">Những người kể chuyện</h3>
@@ -354,18 +305,6 @@ search: `
 <span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] orange ">M</span>
 <strong>Mê Việt Nam</strong>
 <small class="text-xs">@mevietnam</small>
-<button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-pressed="false">Theo dõi</button>
-</div>
-<div class="person-card flex flex-col items-center gap-[9px] [padding:17px_8px] [border:1px_solid_var(--color-line)] rounded-[13px] bg-card text-center [&amp;_strong]:text-[13px] [&amp;_small]:text-[11px] [&amp;_small]:text-muted [&amp;_.follow]:mt-auto max-[600px]:[flex:0_0_142px] max-[600px]:[&amp;_.follow]:px-[10px]">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] black ">T</span>
-<strong>Tech Daily</strong>
-<small class="text-xs">@techdaily</small>
-<button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-pressed="false">Theo dõi</button>
-</div>
-<div class="person-card flex flex-col items-center gap-[9px] [padding:17px_8px] [border:1px_solid_var(--color-line)] rounded-[13px] bg-card text-center [&amp;_strong]:text-[13px] [&amp;_small]:text-[11px] [&amp;_small]:text-muted [&amp;_.follow]:mt-auto max-[600px]:[flex:0_0_142px] max-[600px]:[&amp;_.follow]:px-[10px]">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] green ">L</span>
-<strong>Linh Trần</strong>
-<small class="text-xs">@linhtran</small>
 <button class="[font-family:inherit] follow inline-flex items-center justify-center min-h-[40px] [padding:7px_11px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-transparent text-[12px] font-bold whitespace-nowrap [&amp;:hover]:bg-[light-dark(#eee7dc,_#393229)] [&amp;.following]:bg-ink [&amp;.following]:text-card [&amp;_svg]:w-[15px] [&amp;_svg]:h-[15px] " aria-pressed="false">Theo dõi</button>
 </div>
 </div>
@@ -403,40 +342,6 @@ bell: `
 <span class="live-dot inline-block shrink-0 w-[6px] h-[6px] rounded-full bg-green">
 </span>
 </a>
-<a class="notification flex items-start gap-[16px] p-[24px] [border-bottom:1px_solid_var(--color-line)] text-[14px] leading-[1.6] [&amp;.unread]:bg-[#eddbb422] [&amp;:hover]:bg-[#eddbb444] [&amp;_&gt;_div]:flex-1 [&amp;_&gt;_.live-dot]:mt-[10px] [&amp;_&gt;_.live-dot]:bg-accent [&amp;_.avatar]:w-[34px] [&amp;_.avatar]:h-[34px] [&amp;_.avatar]:text-[17px] [&amp;_blockquote]:[margin:10px_0] [&amp;_blockquote]:pl-[13px] [&amp;_blockquote]:[border-left:2px_solid_#d1b887] [&amp;_blockquote]:text-muted [&amp;_small]:text-muted [&amp;_small]:text-[12px] max-[600px]:[padding:22px_18px] max-[600px]:gap-[12px] unread" href="#post/1">
-<span class="notification-type [&amp;.heart]:text-[light-dark(#bd3350,_#ff8da5)] [&amp;.comment]:text-blue [&amp;.repost]:text-green comment">
-<svg class="size-[21px] shrink-0 fill-none stroke-current [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-<path d="M21 12a8 8 0 0 1-9 8 9 9 0 0 1-4-1l-5 2 2-5a9 9 0 1 1 16-4z">
-</path>
-</svg>
-</span>
-<div>
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] orange ">M</span>
-<p class="[margin:1em_0]">
-<strong>Mê Việt Nam</strong> nhắc đến bạn trong một bình luận.</p>
-<blockquote>@annguyen Một góc Việt Nam thật đẹp, bạn nhỉ?</blockquote>
-<small class="text-xs">20 phút trước</small>
-</div>
-<span class="live-dot inline-block shrink-0 w-[6px] h-[6px] rounded-full bg-green">
-</span>
-</a>
-<a class="notification flex items-start gap-[16px] p-[24px] [border-bottom:1px_solid_var(--color-line)] text-[14px] leading-[1.6] [&amp;.unread]:bg-[#eddbb422] [&amp;:hover]:bg-[#eddbb444] [&amp;_&gt;_div]:flex-1 [&amp;_&gt;_.live-dot]:mt-[10px] [&amp;_&gt;_.live-dot]:bg-accent [&amp;_.avatar]:w-[34px] [&amp;_.avatar]:h-[34px] [&amp;_.avatar]:text-[17px] [&amp;_blockquote]:[margin:10px_0] [&amp;_blockquote]:pl-[13px] [&amp;_blockquote]:[border-left:2px_solid_#d1b887] [&amp;_blockquote]:text-muted [&amp;_small]:text-muted [&amp;_small]:text-[12px] max-[600px]:[padding:22px_18px] max-[600px]:gap-[12px] unread" href="#post/2">
-<span class="notification-type [&amp;.heart]:text-[light-dark(#bd3350,_#ff8da5)] [&amp;.comment]:text-blue [&amp;.repost]:text-green repost">
-<svg class="size-[21px] shrink-0 fill-none stroke-current [stroke-width:1.7]" aria-hidden="true" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-<path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3">
-</path>
-</svg>
-</span>
-<div>
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] black ">T</span>
-<p class="[margin:1em_0]">
-<strong>Tech Daily</strong> đăng lại một câu chuyện bạn quan tâm.</p>
-<blockquote>AI và người làm sáng tạo.</blockquote>
-<small class="text-xs">1 giờ trước</small>
-</div>
-<span class="live-dot inline-block shrink-0 w-[6px] h-[6px] rounded-full bg-green">
-</span>
-</a>
 <p class="feed-end m-0 [padding:32px_20px] text-muted text-center text-[11px] leading-[1.9] [&amp;_span]:text-muted [&amp;_span]:text-[12px]">Bạn đã xem hết thông báo.</p>`,
 mail: `
 <div class="inbox-intro [padding:28px_24px] [&amp;_h2]:[margin:10px_0_24px] [&amp;_h2]:font-serif [&amp;_h2]:text-[33px] [&amp;_h2]:tracking-[-1px] max-[600px]:[padding:24px_18px]">
@@ -458,42 +363,6 @@ mail: `
 <strong>Mê Việt Nam</strong>
 <p class="[margin:1em_0]">__MESSAGE__</p>
 <small class="text-xs">@mevietnam</small>
-</div>
-<span aria-hidden="true">↗</span>
-</button>
-<button class="[font-family:inherit] thread w-full flex items-center gap-[14px] [padding:23px_24px] [border:0] [border-top:1px_solid_var(--color-line)] bg-transparent text-left [&amp;:hover]:bg-[#eddbb433] [&amp;_&gt;_div]:min-w-0 [&amp;_&gt;_div]:flex-1 [&amp;_strong]:text-[14px] [&amp;_p]:overflow-hidden [&amp;_p]:text-ellipsis [&amp;_p]:whitespace-nowrap [&amp;_p]:text-[14px] [&amp;_p]:text-muted [&amp;_small]:text-[12px] [&amp;_small]:text-muted">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] black ">T</span>
-<div>
-<strong>Tech Daily</strong>
-<p class="[margin:1em_0]">__MESSAGE__</p>
-<small class="text-xs">@techdaily</small>
-</div>
-<span aria-hidden="true">↗</span>
-</button>
-<button class="[font-family:inherit] thread w-full flex items-center gap-[14px] [padding:23px_24px] [border:0] [border-top:1px_solid_var(--color-line)] bg-transparent text-left [&amp;:hover]:bg-[#eddbb433] [&amp;_&gt;_div]:min-w-0 [&amp;_&gt;_div]:flex-1 [&amp;_strong]:text-[14px] [&amp;_p]:overflow-hidden [&amp;_p]:text-ellipsis [&amp;_p]:whitespace-nowrap [&amp;_p]:text-[14px] [&amp;_p]:text-muted [&amp;_small]:text-[12px] [&amp;_small]:text-muted">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] green ">L</span>
-<div>
-<strong>Linh Trần</strong>
-<p class="[margin:1em_0]">__MESSAGE__</p>
-<small class="text-xs">@linhtran</small>
-</div>
-<span aria-hidden="true">↗</span>
-</button>
-<button class="[font-family:inherit] thread w-full flex items-center gap-[14px] [padding:23px_24px] [border:0] [border-top:1px_solid_var(--color-line)] bg-transparent text-left [&amp;:hover]:bg-[#eddbb433] [&amp;_&gt;_div]:min-w-0 [&amp;_&gt;_div]:flex-1 [&amp;_strong]:text-[14px] [&amp;_p]:overflow-hidden [&amp;_p]:text-ellipsis [&amp;_p]:whitespace-nowrap [&amp;_p]:text-[14px] [&amp;_p]:text-muted [&amp;_small]:text-[12px] [&amp;_small]:text-muted">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] yellow ">N</span>
-<div>
-<strong>Nhà Có Hai Người</strong>
-<p class="[margin:1em_0]">__MESSAGE__</p>
-<small class="text-xs">@nhacohai</small>
-</div>
-<span aria-hidden="true">↗</span>
-</button>
-<button class="[font-family:inherit] thread w-full flex items-center gap-[14px] [padding:23px_24px] [border:0] [border-top:1px_solid_var(--color-line)] bg-transparent text-left [&amp;:hover]:bg-[#eddbb433] [&amp;_&gt;_div]:min-w-0 [&amp;_&gt;_div]:flex-1 [&amp;_strong]:text-[14px] [&amp;_p]:overflow-hidden [&amp;_p]:text-ellipsis [&amp;_p]:whitespace-nowrap [&amp;_p]:text-[14px] [&amp;_p]:text-muted [&amp;_small]:text-[12px] [&amp;_small]:text-muted">
-<span aria-hidden="true" class="avatar inline-grid flex-none place-items-center w-[42px] h-[42px] overflow-hidden [border:1.5px_solid_var(--color-edge)] rounded-full bg-[#427dbb] text-white font-serif text-[20px] font-black [&amp;.orange]:bg-accent [&amp;.orange]:text-[#24221f] [&amp;.green]:bg-[#288064] [&amp;.yellow]:bg-[#efcc62] [&amp;.yellow]:text-[#24221f] [&amp;.black]:bg-[#24221f] black ">D</span>
-<div>
-<strong>Design Notes</strong>
-<p class="[margin:1em_0]">__MESSAGE__</p>
-<small class="text-xs">@designnotes</small>
 </div>
 <span aria-hidden="true">↗</span>
 </button>
