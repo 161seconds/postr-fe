@@ -70,7 +70,7 @@
         if (view === 'post') feed = feed.filter(post => post.id === Number(params.get('postId')));
         if (view === 'user') feed = feed.filter(post => post.author.id === state.profile.id || state.interactions.repost.includes(post.id));
         if (view === 'following') feed = feed.filter(post => post.author.id === state.profile.id || state.following.includes(post.author.handle));
-        if (view === 'liked' || view === 'bookmark') feed = feed.filter(post => state.interactions[view === 'liked' ? 'like' : 'save'].includes(post.id));
+        if (['reposted', 'liked', 'bookmark'].includes(view)) feed = feed.filter(post => state.interactions[{reposted:'repost',liked:'like',bookmark:'save'}[view]].includes(post.id));
         if (view === 'search') {
           const topic = params.get('topic') || 'Tất cả', query = normalize(params.get('q') || '');
           feed = feed.filter(post => (topic === 'Tất cả' || post.topic === topic) && normalize(`${post.copy} ${post.quote || ''} ${post.author.name} ${post.author.handle}`).includes(query));
@@ -314,7 +314,21 @@
         sockets.at(-1).onmessage({data:JSON.stringify({type:1,target:'ReceiveMessage',arguments:[]}) + '\x1e'});
         await wait(() => writes.messages === 2 && !delayMessage); assert($('.message-form button').disabled, 'Realtime render enabled a pending send');
         await wait(() => !$('.message-form button').disabled); assert($('.message-form textarea').value === 'Next message draft', 'Pending send discarded the next draft');
-        await go('#user'); $('.profile-top button').click(); const profile = $('dialog form');
+        await go('#user');
+        assert([...document.querySelectorAll('.profile-tabs button')].map(button => button.textContent).join('|') === 'Bài đăng|Đăng lại|Đã thích|Đã lưu', 'Profile tabs missing');
+        const savedFeed = state.feed.slice(), savedInteractions = structuredClone(state.interactions);
+        state.feed.push({...fixture.feed[0],id:991,author:contact}, {...fixture.feed[0],id:992,author:contact});
+        state.interactions.repost = [991]; state.interactions.save = [992];
+        for (const [index, view, action] of [[1,'reposted','repost'],[2,'liked','like'],[3,'bookmark','save']]) {
+          document.querySelectorAll('.profile-tabs button')[index].click();
+          await wait(() => stateRequests.at(-1).view === view && document.querySelectorAll('.profile-tabs button')[index].getAttribute('aria-pressed') === 'true');
+          const expected = state.feed.filter(post => state.interactions[action].includes(post.id)).map(post => post.id);
+          assert([...document.querySelectorAll('.post')].map(post => Number(post.dataset.id)).join(',') === expected.join(','), 'Profile tab shows wrong posts: ' + view);
+        }
+        state.feed = savedFeed; state.interactions = savedInteractions;
+        document.querySelectorAll('.profile-tabs button')[0].click();
+        await wait(() => stateRequests.at(-1).view === 'user' && $('.profile-tabs button').getAttribute('aria-pressed') === 'true');
+        $('.profile-top button').click(); const profile = $('dialog form');
         const coverBox = $('.profile-cover-picker', profile).getBoundingClientRect(), avatarBox = $('.profile-avatar-picker', profile).getBoundingClientRect();
         assert(avatarBox.top > coverBox.top && avatarBox.top < coverBox.bottom && avatarBox.bottom > coverBox.bottom, 'Profile avatar does not overlap cover');
         const profileBox = profile.closest('dialog').getBoundingClientRect();

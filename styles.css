@@ -13,6 +13,8 @@ body{margin:0;line-height:normal;background:radial-gradient(ellipse at 0 0,#ff70
 .rightbar{position:sticky;top:0;align-self:start;max-height:100dvh;overflow-y:auto;margin-inline:-6px;padding-inline:6px}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .profile-cover:has(.profile-banner){padding:0}.profile-banner{width:100%;height:100%;object-fit:cover}
+.profile-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--color-line)}
+.profile-tabs .tab{min-width:0;white-space:nowrap}
 dialog.profile-dialog{width:min(540px,calc(100% - 28px));max-height:calc(100dvh - 32px);border:1px solid var(--color-line);border-radius:22px;box-shadow:0 24px 80px #0006}
 .profile-dialog .modal-heading{position:sticky;top:0;z-index:3;padding:12px 20px;background:var(--color-card)}
 .profile-dialog .modal-heading .icon-button{color:var(--color-muted)}

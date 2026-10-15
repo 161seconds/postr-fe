@@ -19,7 +19,7 @@ function selfCheck() {
 }
 if (new URLSearchParams(location.search).has('check'))
     selfCheck();
-let state, followingTab = false, profileTab = false, topic = 'Tất cả', selected = null, mentions = false, previousRoute = '', saves = Promise.resolve(), toastTimer;
+let state, followingTab = false, profileTab = 0, topic = 'Tất cả', selected = null, mentions = false, previousRoute = '', saves = Promise.resolve(), toastTimer;
 let token = '';
 try {
     token = sessionStorage.getItem('postr-token') || '';
@@ -79,8 +79,8 @@ async function refreshState(append = false) {
     feedLoading = true;
     const {name, parameter, query: search} = route();
     if (name !== previousRoute) topic = 'Tất cả';
-    let view = name === 'home' ? (followingTab ? 'following' : 'home') : name === 'user' ? (profileTab ? 'liked' : 'user') : ['search', 'bookmark', 'post'].includes(name) ? name : 'home';
-    if (!token && ['following', 'user', 'liked', 'bookmark'].includes(view)) view = 'home';
+    let view = name === 'home' ? (followingTab ? 'following' : 'home') : name === 'user' ? ['user', 'reposted', 'liked', 'bookmark'][profileTab] : ['search', 'bookmark', 'post'].includes(name) ? name : 'home';
+    if (!token && ['following', 'user', 'reposted', 'liked', 'bookmark'].includes(view)) view = 'home';
     const params = new URLSearchParams({view});
     if (view === 'search') { params.set('q', search); params.set('topic', topic); }
     if (view === 'post') params.set('postId', parameter);
@@ -373,7 +373,9 @@ function render() {
     if (name === 'mail')
         setupMail();
     if (name === 'user') {
-        setTabs(profileTab ? 1 : 0, index => { profileTab = index === 1; feedPage = 1; refreshState().catch(error => notice(error.message)); });
+        const tabs = $('.profile-tabs'), prototype = $('button', tabs);
+        tabs.replaceChildren(...['Bài đăng', 'Đăng lại', 'Đã thích', 'Đã lưu'].map(label => { const button = prototype.cloneNode(true); button.textContent = label; return button; }));
+        setTabs(profileTab, index => { profileTab = index; feedPage = 1; refreshState().catch(error => notice(error.message)); });
         const dialog = $('dialog');
         $('.profile-top button').onclick = () => dialog.showModal();
         const form = $('form', dialog), submit = $('.post-button', form), images = {avatarUrl:state.profile.avatarUrl ?? null,bannerUrl:state.profile.bannerUrl ?? null};
