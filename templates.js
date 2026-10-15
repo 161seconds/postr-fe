@@ -400,7 +400,7 @@ user: `
 <div class="tabs grid grid-cols-[1fr_1fr] [border-bottom:1px_solid_var(--color-line)]">
 <button class="[font-family:inherit] tab relative [padding:18px_8px] min-h-[52px] [border:0] bg-transparent text-muted font-bold text-[13px] [&amp;:hover]:bg-[#e8dfd140] [&amp;.active]:text-ink [&amp;.active::after]:absolute [&amp;.active::after]:bottom-[-1px] [&amp;.active::after]:left-[50%] [&amp;.active::after]:w-[64px] [&amp;.active::after]:h-[3px] [&amp;.active::after]:rounded-[3px] [&amp;.active::after]:bg-accent [&amp;.active::after]:content-[&#x27;&#x27;] [&amp;.active::after]:[transform:translateX(-50%)] max-[600px]:[padding:16px_8px] active" aria-pressed="true">Bài đăng</button>
 <button class="[font-family:inherit] tab relative [padding:18px_8px] min-h-[52px] [border:0] bg-transparent text-muted font-bold text-[13px] [&amp;:hover]:bg-[#e8dfd140] [&amp;.active]:text-ink [&amp;.active::after]:absolute [&amp;.active::after]:bottom-[-1px] [&amp;.active::after]:left-[50%] [&amp;.active::after]:w-[64px] [&amp;.active::after]:h-[3px] [&amp;.active::after]:rounded-[3px] [&amp;.active::after]:bg-accent [&amp;.active::after]:content-[&#x27;&#x27;] [&amp;.active::after]:[transform:translateX(-50%)] max-[600px]:[padding:16px_8px] " aria-pressed="false">Đã thích</button>
-</div>__POSTS__<dialog class="modal [width:min(550px,_calc(100%_-_28px))] [max-height:calc(100dvh_-_40px)] p-0 overflow-y-auto [border:1.5px_solid_var(--color-edge)] rounded-[20px] bg-card shadow-[8px_8px_0_light-dark(#24221f40,_#00000066)] text-ink [&amp;::backdrop]:bg-[light-dark(#24221f66,_#00000099)] [&amp;::backdrop]:[backdrop-filter:blur(4px)] [&amp;_.composer]:[border:0] max-[600px]:[&amp;_.composer]:[padding:18px_14px]" aria-labelledby="edit-profile-title">
+</div>__POSTS__<dialog class="modal profile-dialog [width:min(550px,_calc(100%_-_28px))] [max-height:calc(100dvh_-_40px)] p-0 overflow-y-auto [border:1.5px_solid_var(--color-edge)] rounded-[20px] bg-card shadow-[8px_8px_0_light-dark(#24221f40,_#00000066)] text-ink [&amp;::backdrop]:bg-[light-dark(#24221f66,_#00000099)] [&amp;::backdrop]:[backdrop-filter:blur(4px)] [&amp;_.composer]:[border:0] max-[600px]:[&amp;_.composer]:[padding:18px_14px]" aria-labelledby="edit-profile-title">
 <div class="modal-heading flex justify-between items-center [padding:17px_22px] [border-bottom:1px_solid_var(--color-line)] [&amp;_h2]:m-0 [&amp;_h2]:font-serif [&amp;_h2]:text-[22px] max-[600px]:p-[16px] max-[600px]:[&amp;_h2]:text-[20px]">
 <h2 class="[margin:.83em_0] font-bold" id="edit-profile-title">Chỉnh sửa hồ sơ</h2>
 <button class="[font-family:inherit] icon-button inline-grid place-items-center [border:0] bg-transparent rounded-full shrink-0 w-[44px] h-[44px] text-blue [&amp;:hover]:bg-[light-dark(#2466c20d,_#86b6f612)]" aria-label="Đóng chỉnh sửa hồ sơ">
@@ -410,17 +410,34 @@ user: `
 </svg>
 </button>
 </div>
-<form class="profile-form grid gap-[20px] p-[24px] [&amp;_label]:grid [&amp;_label]:gap-[8px] [&amp;_label]:text-[12px] [&amp;_label]:font-bold [&amp;_input]:p-[12px] [&amp;_input]:[border:1px_solid_var(--color-line)] [&amp;_input]:rounded-[9px] [&amp;_input]:bg-paper [&amp;_input]:text-[14px] [&amp;_textarea]:p-[12px] [&amp;_textarea]:[border:1px_solid_var(--color-line)] [&amp;_textarea]:rounded-[9px] [&amp;_textarea]:bg-paper [&amp;_textarea]:text-[14px] [&amp;_.post-button]:w-fit max-[600px]:[&amp;_input]:text-[16px] max-[600px]:[&amp;_textarea]:text-[16px]">
-<label>Ảnh đại diện<img data-image-preview="avatar" class="profile-image-preview profile-avatar-preview" alt="Ảnh đại diện đã chọn" hidden><input type="file" data-profile-image="avatar" accept="image/jpeg,image/png,image/webp,image/gif"></label>
-<label>Ảnh bìa<img data-image-preview="banner" class="profile-image-preview" alt="Ảnh bìa đã chọn" hidden><input type="file" data-profile-image="banner" accept="image/jpeg,image/png,image/webp,image/gif"></label>
-<p class="profile-image-help">Chọn JPG, PNG, WebP hoặc GIF, mỗi ảnh tối đa 5 MB.</p>
-<label>Tên hiển thị<input class="[font-family:inherit]" required="" maxLength="50" name="name" value="__NAME__"/>
+<form class="profile-form profile-editor">
+<div class="profile-media-editor">
+<label class="profile-cover-picker">
+<span class="profile-cover-empty" aria-hidden="true">postr<span>.</span></span>
+<img data-image-preview="banner" class="profile-image-preview" alt="Ảnh bìa đã chọn" hidden>
+<span class="profile-photo-action"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 5 6 8H3v12h18V8h-3l-2-3Z"/><circle cx="12" cy="13" r="3"/></svg>Đổi ảnh bìa</span>
+<input class="profile-image-input" type="file" data-profile-image="banner" aria-label="Đổi ảnh bìa" aria-describedby="profile-image-help" accept="image/jpeg,image/png,image/webp,image/gif">
 </label>
-<label>Giới thiệu<textarea class="w-full min-h-[66px] resize-y border-0 bg-transparent text-[16px] leading-[1.6] placeholder:text-[light-dark(#8b8780,#a99f92)] [font-family:inherit]" name="bio" maxLength="160">__BIO__</textarea>
+<label class="profile-avatar-picker">
+<span aria-hidden="true">__INITIAL__</span><img data-image-preview="avatar" class="profile-image-preview profile-avatar-preview" alt="Ảnh đại diện đã chọn" hidden>
+<span class="profile-camera-badge"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 5 6 8H3v12h18V8h-3l-2-3Z"/><circle cx="12" cy="13" r="3"/></svg></span>
+<input class="profile-image-input" type="file" data-profile-image="avatar" aria-label="Đổi ảnh đại diện" aria-describedby="profile-image-help" accept="image/jpeg,image/png,image/webp,image/gif">
 </label>
-<label>Vị trí<input class="[font-family:inherit]" maxLength="80" name="location" value="__LOCATION__"/>
+<div class="profile-photo-caption"><strong>Ảnh hồ sơ</strong><span>Chạm vào ảnh để thay đổi</span></div>
+</div>
+<p id="profile-image-help" class="profile-image-help">JPG, PNG, WebP, GIF · Tối đa 5 MB mỗi ảnh</p>
+<div class="profile-fields">
+<label>Tên hiển thị<input required="" maxLength="50" name="name" value="__NAME__" placeholder="Tên bạn muốn hiển thị"/>
 </label>
+<label>Vị trí<input maxLength="80" name="location" value="__LOCATION__" placeholder="Bạn đang ở đâu?"/>
+</label>
+<label class="profile-bio">Giới thiệu<textarea name="bio" maxLength="160" rows="3" placeholder="Kể đôi chút về bạn…">__BIO__</textarea>
+</label>
+</div>
+<div class="profile-editor-actions">
+<button type="button" class="profile-cancel" data-profile-cancel>Hủy</button>
 <button class="[font-family:inherit] post-button inline-flex items-center justify-center ml-auto min-h-[44px] [padding:8px_21px] [border:1.5px_solid_var(--color-edge)] rounded-[100px] bg-accent text-[#24221f] text-[14px] font-bold [&amp;:hover:not(:disabled)]:bg-[#ff906a]">Lưu thay đổi</button>
+</div>
 </form>
 </dialog>`,
 composer: `

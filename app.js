@@ -377,7 +377,7 @@ function render() {
         const dialog = $('dialog');
         $('.profile-top button').onclick = () => dialog.showModal();
         const form = $('form', dialog), submit = $('.post-button', form), images = {avatarUrl:state.profile.avatarUrl ?? null,bannerUrl:state.profile.bannerUrl ?? null};
-        $('[name=location]', form).value = state.profile.location || '';
+        $('[name=location]', form).defaultValue = state.profile.location || '';
         const previews = new Map();
         $$('[data-profile-image]', form).forEach(input => {
             const name = input.dataset.profileImage, preview = $(`[data-image-preview=${name}]`, form);
@@ -397,8 +397,10 @@ function render() {
                 preview.hidden = !mediaURL(url); if (mediaURL(url)) preview.src = url; else preview.removeAttribute('src');
             });
         };
-        $('.modal-heading button', dialog).onclick = () => { resetPhotos(); dialog.close(); };
-        dialog.addEventListener('cancel', resetPhotos);
+        const closeProfile = () => { form.reset(); $('[name=name]', form).setCustomValidity(''); resetPhotos(); dialog.close(); };
+        $('.modal-heading button', dialog).onclick = closeProfile;
+        $('[data-profile-cancel]', form).onclick = closeProfile;
+        dialog.addEventListener('cancel', closeProfile);
         dialog.addEventListener('close', () => { if (!dialog.open) resetPhotos(); });
         form.onsubmit = async (event) => { event.preventDefault(); if (submit.disabled) return; const data = Object.fromEntries(new FormData(form)); data.name = data.name.trim(); if (!data.name) {
             const input = $('[name=name]', dialog);

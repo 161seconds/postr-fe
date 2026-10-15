@@ -314,7 +314,15 @@
         sockets.at(-1).onmessage({data:JSON.stringify({type:1,target:'ReceiveMessage',arguments:[]}) + '\x1e'});
         await wait(() => writes.messages === 2 && !delayMessage); assert($('.message-form button').disabled, 'Realtime render enabled a pending send');
         await wait(() => !$('.message-form button').disabled); assert($('.message-form textarea').value === 'Next message draft', 'Pending send discarded the next draft');
-        await go('#user'); $('.profile-top button').click(); const profile = $('dialog form'); $('[name=name]', profile).value = 'Updated name';
+        await go('#user'); $('.profile-top button').click(); const profile = $('dialog form');
+        const coverBox = $('.profile-cover-picker', profile).getBoundingClientRect(), avatarBox = $('.profile-avatar-picker', profile).getBoundingClientRect();
+        assert(avatarBox.top > coverBox.top && avatarBox.top < coverBox.bottom && avatarBox.bottom > coverBox.bottom, 'Profile avatar does not overlap cover');
+        const profileBox = profile.closest('dialog').getBoundingClientRect();
+        assert(profileBox.x >= 0 && profileBox.right <= innerWidth && profileBox.y >= 0 && profileBox.bottom <= innerHeight, 'Profile editor overflows viewport');
+        const savedName = $('[name=name]', profile).value; $('[name=name]', profile).value = 'Discarded edit';
+        $('[data-profile-cancel]', profile).click(); assert(!profile.closest('dialog').open, 'Profile cancel did not close editor');
+        $('.profile-top button').click(); assert($('[name=name]', profile).value === savedName, 'Profile cancel retained unsaved fields');
+        $('[name=name]', profile).value = 'Updated name';
         failRefresh = true; profile.requestSubmit(); await wait(() => writes.profiles === 1 && !failRefresh);
         await new Promise(resolve => setTimeout(resolve, 20)); assert($('#toast').textContent.includes('Đã lưu thay đổi'), 'Profile success hid refresh warning');
         $('.profile-top button').click(); const photos = $('dialog form');
