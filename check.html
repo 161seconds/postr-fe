@@ -17,6 +17,12 @@
   <script type="module">
     // Runs the real UI against an in-memory API. No writes reach the backend.
     const nativeFetch = window.fetch.bind(window);
+    const nativeWebSocket = window.WebSocket, nativeConfirm = window.confirm, sockets = [];
+    window.WebSocket = class {
+      constructor(url) { this.url = String(url); sockets.push(this); setTimeout(() => this.onopen?.(), 0); }
+      send() {}
+      close() { this.closed = true; this.onclose?.(); }
+    };
     const originalToken = sessionStorage.getItem('postr-token');
     const originalTheme = localStorage.getItem('postr-theme');
     const person = { id: 'a'.repeat(24), name: 'Check Admin', handle: '@check_admin', initial: 'C', tone: '' };
@@ -43,12 +49,12 @@
     const adminCheck = new URLSearchParams(location.search).has('admin');
     const guestCheck = new URLSearchParams(location.search).has('guest');
     let anonymousWrites = 0, expireNext = false, delayPage = false, failPage = false;
-    let failRefresh = false, failWrite = false, delayReply = false;
+    let failRefresh = false, failWrite = false, delayReply = false, delayMessage = false;
     const writes = { posts: 0, replies: 0, messages: 0, profiles: 0 };
     const stateRequests = [], authRequests = [];
     let adminPost = { id: 'b'.repeat(24), author: { displayName: 'Real Author', username: 'author' }, content: 'Real moderated post <img>', status: 'ACTIVE', stats: { likes: 0 }, createdAt: '2026-10-13T00:00:00Z' };
     window.fetch = async (url, options = {}) => {
-      const body = options.body ? JSON.parse(options.body) : {};
+      const body = options.body && !(options.body instanceof FormData) ? JSON.parse(options.body) : {};
       if (url === '/api/v1/auth/login' || url === '/api/v1/auth/register') {
         authRequests.push({ url, body });
         state = structuredClone(fixture); state.profile.name = 'Test Account'; state.profile.role = 'USER';
@@ -82,12 +88,18 @@
         writes.posts++;
         state.feed.unshift({ ...fixture.feed[0], id: Math.max(...state.feed.map(post => post.id)) + 1, copy: body.copy, image: body.image, replies: [], replyAuthors: [] });
       }
+      if (url === '/api/v1/media' && options.body instanceof FormData) return new Response(JSON.stringify({url:'/api/v1/media/' + 'd'.repeat(32)}), {status:201});
+      if (/^\/api\/posts\/\d+$/.test(url)) {
+        const id = Number(url.split('/')[3]), post = state.feed.find(post => post.id === id);
+        if (options.method === 'PUT') post.copy = body.copy;
+        if (options.method === 'DELETE') state.feed = state.feed.filter(post => post.id !== id);
+      }
       if (/^\/api\/posts\/\d+\/replies$/.test(url)) {
         writes.replies++;
         if (delayReply) { delayReply = false; await new Promise(resolve => setTimeout(resolve, 100)); }
         const post = state.feed.find(post => post.id === Number(url.split('/')[3])); post.replies.push(body.copy); post.replyAuthors.push(state.profile);
       }
-      if (url.startsWith('/api/messages/')) { writes.messages++; (state.threads[decodeURIComponent(url.slice('/api/messages/'.length))] ||= []).push({ copy: body.copy, mine: true }); }
+      if (url.startsWith('/api/messages/')) { writes.messages++; if (delayMessage) { delayMessage = false; await new Promise(resolve => setTimeout(resolve, 100)); } (state.threads[decodeURIComponent(url.slice('/api/messages/'.length))] ||= []).push({ copy: body.copy, mine: true }); }
       if (url === '/api/profile') { writes.profiles++; Object.assign(state.profile, body); }
       if (url === '/api/v1/admin/dashboard') return new Response(JSON.stringify({ totalUsers: 2, totalPosts: 1, activePosts: Number(adminPost.status === 'ACTIVE'), hiddenPosts: Number(adminPost.status === 'HIDDEN') }));
       if (url.startsWith('/api/v1/admin/posts/') && options.method === 'PATCH') { adminPost = { ...adminPost, status: body.status, moderationReason: body.status === 'HIDDEN' ? body.reason : null }; return new Response(JSON.stringify(adminPost)); }
@@ -291,18 +303,44 @@
         await go('#mail'); $('.thread').click(); const message = $('.message-form textarea'); message.value = 'Private message draft'; message.dispatchEvent(new Event('input'));
         failRefresh = true; $('.message-form').requestSubmit(); await wait(() => $('.message-form textarea').value === '');
         assert(writes.messages === 1 && $('#toast').textContent.includes('Đã lưu thay đổi'), 'Message refresh failure retained draft');
+        const liveInput = $('.message-form textarea'); liveInput.value = 'Realtime draft'; liveInput.dispatchEvent(new Event('input')); liveInput.focus(); liveInput.setSelectionRange(4, 4);
+        state.threads[contact.handle].push({copy:'Realtime <img>',mine:false});
+        sockets.at(-1).onmessage({data:JSON.stringify({type:1,target:'ReceiveMessage',arguments:[]}) + '\x1e'});
+        await wait(() => [...document.querySelectorAll('.message p')].some(node => node.textContent === 'Realtime <img>'));
+        assert(!$('.message img') && $('.message-form textarea').value === 'Realtime draft', 'Realtime update lost draft or escaping');
+        assert(document.activeElement === $('.message-form textarea') && document.activeElement.selectionStart === 4, 'Realtime update lost typing focus');
+        delayMessage = true; $('.message-form').requestSubmit(); $('.message-form').requestSubmit();
+        $('.message-form textarea').value = 'Next message draft'; $('.message-form textarea').dispatchEvent(new Event('input'));
+        sockets.at(-1).onmessage({data:JSON.stringify({type:1,target:'ReceiveMessage',arguments:[]}) + '\x1e'});
+        await wait(() => writes.messages === 2 && !delayMessage); assert($('.message-form button').disabled, 'Realtime render enabled a pending send');
+        await wait(() => !$('.message-form button').disabled); assert($('.message-form textarea').value === 'Next message draft', 'Pending send discarded the next draft');
         await go('#user'); $('.profile-top button').click(); const profile = $('dialog form'); $('[name=name]', profile).value = 'Updated name';
         failRefresh = true; profile.requestSubmit(); await wait(() => writes.profiles === 1 && !failRefresh);
         await new Promise(resolve => setTimeout(resolve, 20)); assert($('#toast').textContent.includes('Đã lưu thay đổi'), 'Profile success hid refresh warning');
+        $('.profile-top button').click(); const photos = $('dialog form');
+        for (const input of photos.querySelectorAll('[data-profile-image]')) { const selected = new DataTransfer(); selected.items.add(new File([bytes], 'profile.png', {type:'image/png'})); input.files = selected.files; input.dispatchEvent(new Event('change')); }
+        assert(photos.querySelectorAll('img:not([hidden])').length === 2, 'Profile photo previews missing');
+        photos.requestSubmit(); await wait(() => writes.profiles === 2 && $('.profile-top .avatar img'));
+        assert($('.profile-banner').getAttribute('src') === '/api/v1/media/' + 'd'.repeat(32), 'Banner was not saved/rendered');
         await go('#home'); failWrite = true; $('.composer').requestSubmit(); await wait(() => !$('.composer .post-button').disabled);
         assert($('.composer textarea').value.startsWith('Private account draft') && $('.attachment img') && writes.posts === 0, 'Failed post discarded draft');
         failRefresh = true; $('.composer').requestSubmit(); await wait(() => $('.composer textarea').value === '');
         assert(writes.posts === 1 && !$('.attachment img') && $('#toast').textContent.includes('Đã lưu thay đổi'), 'Saved post refresh failure retained draft/hid warning');
         $('.composer').requestSubmit(); await new Promise(resolve => setTimeout(resolve, 20)); assert(writes.posts === 1, 'Refresh failure duplicated post');
         await go('#home'); assert($('.post-copy').textContent === 'Private account draft😊', 'Saved post missing after refresh retry');
+        const editedId = state.feed[0].id, retainedImage = state.feed[0].image;
+        $('[data-edit-post]').click(); const editor = $('#dialogs form'); $('textarea', editor).value = 'Edited content <img>'; $('textarea', editor).dispatchEvent(new Event('input')); editor.requestSubmit();
+        await wait(() => $('.post-copy').textContent === 'Edited content <img>');
+        assert(!$('.post-copy img') && state.feed[0].image === retainedImage, 'Editing did not escape content or discarded image');
+        state.feed.push({...fixture.feed[0],id:999,author:state.profile}, {...fixture.feed[0],id:998,author:contact}); await go('#home');
+        assert(!$('.post[data-id="998"] [data-edit-post]'), 'Another author has edit controls');
+        window.confirm = () => false; $('.post[data-id="999"] [data-delete-post]').click(); assert(state.feed.some(post => post.id === 999), 'Cancel deleted the post');
+        window.confirm = () => true; $('.post[data-id="999"] [data-delete-post]').click(); await wait(() => !$('.post[data-id="999"]'));
+        assert(state.feed.some(post => post.id === editedId), 'Delete removed another post'); window.confirm = nativeConfirm;
         $('.composer textarea').value = 'Private account draft'; $('.composer textarea').dispatchEvent(new Event('input'));
         await go('#mail'); $('.thread').click(); $('.message-form textarea').value = 'Private message draft'; $('.message-form textarea').dispatchEvent(new Event('input'));
         await go('#home'); $('.heading-actions .follow').click(); await wait(() => $('[data-login]'));
+        assert(sockets.every(socket => socket.closed), 'Logout left a private socket connected');
         assert(!$('.composer') && !$('.conversation'), 'Account UI remains after logout');
         $('[data-login]').click();
         const auth = $('#dialogs form'); $('[name=email]', auth).value = 'check@example.com'; $('[name=password]', auth).value = 'Test-password-123';
@@ -318,11 +356,12 @@
         $('[data-login]').click(); const next = $('#dialogs form'); $('[name=email]', next).value = 'another'; $('[name=password]', next).value = 'Test-password-123'; next.dispatchEvent(new Event('submit', { cancelable: true }));
         await wait(() => $('.thread')); assert(!$('.conversation'), 'Selected conversation leaked into next account'); $('.thread').click(); assert($('.message-form textarea').value === '', 'Message draft leaked into next account');
         await go('#home'); assert($('.composer textarea').value === '' && !$('.attachment'), 'Post draft leaked into next account');
-        $('#check-result').textContent = 'PASS: colors/fonts, responsive, contacts/notifications, reply drafts/pending, write/refresh failures, no duplicate post, logout/account isolation.';
+        $('#check-result').textContent = 'PASS: colors/fonts, responsive, profile photos, edit/delete ownership, realtime messages/drafts/focus, write/refresh failures, logout/account isolation.';
       }
     } catch (error) { $('#check-result').textContent = `FAIL: ${error.stack}`; throw error; }
     finally {
       window.fetch = nativeFetch;
+      window.WebSocket = nativeWebSocket; window.confirm = nativeConfirm;
       originalToken === null ? sessionStorage.removeItem('postr-token') : sessionStorage.setItem('postr-token', originalToken);
       originalTheme === null ? localStorage.removeItem('postr-theme') : localStorage.setItem('postr-theme', originalTheme);
     }

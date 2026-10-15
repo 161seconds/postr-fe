@@ -4,7 +4,9 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const cl = name => name === 'w-full' ? 'w-full min-h-[66px] resize-y border-0 bg-transparent text-[16px] leading-[1.6] [font-family:inherit]' : classes[name] || name;
 const icon = name => { const post = document.createElement('template'); post.innerHTML = templates.shell; return $(`[aria-label="${{ home: 'Trang chủ', search: 'Khám phá', bell: 'Thông báo', mail: 'Tin nhắn', bookmark: 'Đã lưu', user: 'Hồ sơ', pen: 'Đăng bài' }[name]}"] svg`, post.content)?.outerHTML || '<span aria-hidden="true">↗</span>'; };
-const avatar = person => `<span aria-hidden="true" class="${cl('avatar')} ${escape(person.tone)}">${escape(person.initial)}</span>`;
+const mediaURL = value => typeof value === 'string' && (/^data:image\/(jpeg|png|webp|gif);base64,/.test(value) || /^\/api\/v1\/media\/[a-f0-9]{32}$/.test(value));
+const avatarContent = person => mediaURL(person?.avatarUrl) ? `<img src="${escape(person.avatarUrl)}" alt="">` : escape(person?.initial);
+const avatar = person => `<span aria-hidden="true" class="${cl('avatar')} ${escape(person?.tone)}">${avatarContent(person)}</span>`;
 const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLocaleLowerCase('vi');
 // Open /?check for the native browser self-check; no test framework or build step.
 function selfCheck() {
@@ -27,6 +29,8 @@ const drafts = new Map();
 const imageDrafts = new Map();
 const replying = new Set();
 const pendingReplies = new Set();
+const pendingMessages = new Set();
+let chatSocket, chatToken = '', chatRetry, chatVersion = 0;
 let adminPage = 1, adminSearch = '', adminStatus = 'ALL', adminPosts = [];
 let feedPage = 1, stateVersion = 0, feedLoading = false, feedContext = '';
 const feedObserver = new IntersectionObserver(entries => {
@@ -37,9 +41,11 @@ function profileHTML(html) { const p = state.profile || {}; return html.replace(
 function notice(copy) { const box = $('#toast'); box.className = `${cl('toast')} visible`; box.textContent = copy; clearTimeout(toastTimer); toastTimer = setTimeout(() => { box.className = cl('toast'); box.textContent = ''; }, 4500); }
 async function request(path, method = 'GET', body) {
     const sessionToken = token;
-    const response = await fetch(path, { method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const multipart = body instanceof FormData;
+    const response = await fetch(path, { method, headers: { ...(body && !multipart ? { 'Content-Type': 'application/json' } : {}), ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}) }, ...(body ? { body: multipart ? body : JSON.stringify(body) } : {}) });
     if (response.status === 401 && sessionToken && sessionToken === token && !path.startsWith('/api/v1/auth/')) {
         token = '';
+        connectChat();
         state = null;
         drafts.clear(); imageDrafts.clear(); replying.clear(); selected = null; followingTab = false; feedPage = 1;
         try {
@@ -59,7 +65,7 @@ async function request(path, method = 'GET', body) {
         }
     }
     if (!response.ok) {
-        const messages = {INVALID_CREDENTIALS:'Tên đăng nhập hoặc mật khẩu không đúng.',ACCOUNT_EXISTS:'Tên đăng nhập hoặc email đã được sử dụng.',UNAUTHORIZED:'Vui lòng đăng nhập.',FORBIDDEN:'Bạn không có quyền thực hiện thao tác này.'};
+        const messages = {INVALID_CREDENTIALS:'Tên đăng nhập hoặc mật khẩu không đúng.',ACCOUNT_EXISTS:'Tên đăng nhập hoặc email đã được sử dụng.',UNAUTHORIZED:'Vui lòng đăng nhập.',FORBIDDEN:'Bạn không có quyền thực hiện thao tác này.',INVALID_MEDIA:'Ảnh không hợp lệ. Chọn JPG, PNG, WebP hoặc GIF tối đa 5 MB.',INVALID_PROFILE:'Thông tin hồ sơ hoặc ảnh không hợp lệ.',POST_INVALID:'Bài đăng phải có nội dung hoặc ảnh, nội dung tối đa 280 ký tự.',POST_NOT_FOUND:'Bài đăng không còn tồn tại hoặc bạn không có quyền thay đổi.'};
         const error = new Error(messages[data?.code] || data?.message || data?.error?.message || data?.code || 'Không lưu được thay đổi. Vui lòng thử lại.');
         error.status = response.status;
         throw error;
@@ -117,8 +123,11 @@ function feedEndHTML() {
 function requireLogin() { if (state.profile) return true; login(); return false; }
 function mutate(path, method = 'POST', body) {
     if (!requireLogin()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    const sessionToken = token;
     const next = saves.then(async () => {
+        if (sessionToken !== token) throw new Error('Phiên đăng nhập đã thay đổi.');
         await request(path, method, body);
+        if (sessionToken !== token) throw new Error('Phiên đăng nhập đã thay đổi.');
         if (path === '/api/posts') { feedPage = 1; followingTab = false; }
         try { await refreshState(); return true; }
         catch (error) { notice(`Đã lưu thay đổi. Chưa tải lại được dữ liệu: ${error.message}`); return false; }
@@ -127,6 +136,47 @@ function mutate(path, method = 'POST', body) {
     return next.catch(error => { notice(error.message); throw error; });
 }
 function fire(path, method, body) { mutate(path, method, body).catch(() => { }); }
+function connectChat() {
+    if (chatToken === token && (chatSocket || chatRetry)) return;
+    clearTimeout(chatRetry); chatRetry = null;
+    if (chatSocket) { chatSocket.onclose = null; chatSocket.close(); }
+    chatSocket = null; chatToken = token;
+    if (!token || !state?.profile) return;
+    const sessionToken = token;
+    const url = new URL('/hubs/chat', location.href); url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('access_token', sessionToken);
+    const socket = chatSocket = new WebSocket(url);
+    socket.onopen = () => socket.send(JSON.stringify({protocol:'json',version:1}) + '\x1e');
+    socket.onmessage = event => {
+        if (socket !== chatSocket || token !== sessionToken) return;
+        try {
+            for (const raw of event.data.split('\x1e').filter(Boolean)) {
+                const frame = JSON.parse(raw);
+                if (frame.error || frame.type === 7) { socket.close(); return; }
+                if (frame.type === undefined || ['ReceiveMessage','MessageSent'].includes(frame.target)) refreshChat();
+            }
+        } catch { socket.close(); }
+    };
+    socket.onclose = () => { if (socket === chatSocket && token === sessionToken) { chatSocket = null; chatRetry = setTimeout(() => { chatRetry = null; connectChat(); }, 2000); } };
+}
+async function refreshChat() {
+    const sessionToken = token, version = ++chatVersion;
+    try {
+        const data = await request('/api/state?view=home');
+        if (sessionToken !== token || version !== chatVersion || !state?.profile) return;
+        state.threads = data.threads; state.contacts = data.contacts;
+        if (route().name !== 'mail' || location.pathname.startsWith('/admin')) return;
+        const input = $('.message-form textarea'), focused = input === document.activeElement, start = input?.selectionStart, end = input?.selectionEnd;
+        const log = $('.message-history'), scroll = log?.scrollTop, atBottom = !log || log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+        render();
+        if (!atBottom && $('.message-history')) $('.message-history').scrollTop = scroll;
+        if (focused && $('.message-form textarea')) { const next = $('.message-form textarea'); next.focus({preventScroll:true}); next.setSelectionRange(start, end); }
+    } catch (error) {
+        if (sessionToken === token && error.status !== 401) {
+            notice('Chưa tải được tin nhắn mới. Đang thử lại.');
+            setTimeout(() => { if (sessionToken === token) refreshChat(); }, 2000);
+        }
+    }
+}
 function route() { const [name = 'home', parameter = ''] = (location.hash.slice(1) || 'home').split('/'); let query = parameter; try {
     query = decodeURIComponent(parameter);
 }
@@ -195,6 +245,10 @@ function postHTML(post) {
     link.href = `#post/${post.id}`;
     link.textContent = `· ${post.time}`;
     link.setAttribute('aria-label', `Mở bài đăng của ${author.name}`);
+    if (owns(post)) {
+        const id = Number(post.id);
+        $('.post-head', node).insertAdjacentHTML('beforeend', `<button type="button" class="post-menu-trigger" popovertarget="post-menu-${id}" aria-label="Tùy chọn bài đăng" style="anchor-name:--post-menu-${id}">⋯</button><div id="post-menu-${id}" class="post-menu" popover style="position-anchor:--post-menu-${id}"><button type="button" data-edit-post>Sửa bài đăng</button><button type="button" data-delete-post>Xóa bài đăng</button></div>`);
+    }
     $('.post-copy', node).innerHTML = post.copy.split(/(#[\p{L}\p{N}_]+)/u).map(part => part.startsWith('#') ? `<a class="${cl('hashtag')}" href="#search/${encodeURIComponent(part)}">${escape(part)}</a>` : escape(part)).join('');
     const quote = $('.quote-card', node);
     if (post.quote) {
@@ -208,7 +262,7 @@ function postHTML(post) {
         media = `<div class="${cl('media-city')}" role="img" aria-label="Khung cảnh Việt Nam"><div class="${cl('media-caption')}"><small>Điểm đến hôm nay</small><h3>Những nơi chốn khiến mình muốn đi chậm lại.</h3></div></div>`;
     if (post.media === 'tech')
         media = `<div class="${cl('media-tech')}" role="img" aria-label="Không gian làm việc sáng tạo"></div>`;
-    if (post.image && (/^data:image\/(jpeg|png|webp|gif);base64,/.test(post.image) || /^\/api\/v1\/media\/[a-f0-9]{32}$/.test(post.image)))
+    if (mediaURL(post.image))
         media += `<img class="${cl('post-image')}" src="${escape(post.image)}" alt="Ảnh do tác giả đính kèm">`;
     $('.post-copy', node).insertAdjacentHTML('afterend', media);
     const actions = $$('.actions button', node);
@@ -228,6 +282,7 @@ function render() {
     if (!state) {
         return;
     }
+    connectChat();
     if (location.pathname.startsWith('/admin')) {
         renderAdmin();
         return;
@@ -261,6 +316,8 @@ function render() {
     if (!content)
         content = `<section class="${cl('empty-state')}"><h2>Không tìm thấy trang.</h2><a href="#home">Về trang chủ</a></section>`;
     $('#app').innerHTML = profileHTML(templates.shell).replace('__CONTENT__', content);
+    if (state.profile) $$('.profile-mini .avatar,.mobile-header-actions .avatar,.composer .avatar,.profile-top .avatar').forEach(node => node.innerHTML = avatarContent(state.profile));
+    if (name === 'user' && mediaURL(state.profile?.bannerUrl)) $('.profile-cover').innerHTML = `<img src="${escape(state.profile.bannerUrl)}" alt="Ảnh bìa hồ sơ" class="profile-banner">`;
     $('.shell').classList.toggle('home-shell', name === 'home');
     populateCommunity();
     if (state.profile?.role !== 'ADMIN') $$('.admin-link,.admin-mobile').forEach(link => link.remove());
@@ -319,16 +376,49 @@ function render() {
         setTabs(profileTab ? 1 : 0, index => { profileTab = index === 1; feedPage = 1; refreshState().catch(error => notice(error.message)); });
         const dialog = $('dialog');
         $('.profile-top button').onclick = () => dialog.showModal();
-        $('button', dialog).onclick = () => dialog.close();
-        $('form', dialog).onsubmit = async (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(event.currentTarget)); data.name = data.name.trim(); if (!data.name) {
+        const form = $('form', dialog), submit = $('.post-button', form), images = {avatarUrl:state.profile.avatarUrl ?? null,bannerUrl:state.profile.bannerUrl ?? null};
+        $('[name=location]', form).value = state.profile.location || '';
+        const previews = new Map();
+        $$('[data-profile-image]', form).forEach(input => {
+            const name = input.dataset.profileImage, preview = $(`[data-image-preview=${name}]`, form);
+            const original = images[name + 'Url'];
+            if (mediaURL(original)) { preview.src = original; preview.hidden = false; }
+            input.onchange = () => {
+                const file = input.files[0]; if (!file) return;
+                if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024) { input.value = ''; notice('Chọn ảnh JPG, PNG, WebP hoặc GIF tối đa 5 MB.'); return; }
+                if (previews.has(name)) URL.revokeObjectURL(previews.get(name));
+                const url = URL.createObjectURL(file); previews.set(name, url); preview.src = url; preview.hidden = false;
+            };
+        });
+        const resetPhotos = () => {
+            previews.forEach(url => URL.revokeObjectURL(url)); previews.clear();
+            $$('[data-profile-image]', form).forEach(input => {
+                input.value = ''; const preview = $(`[data-image-preview=${input.dataset.profileImage}]`, form), url = images[input.dataset.profileImage + 'Url'];
+                preview.hidden = !mediaURL(url); if (mediaURL(url)) preview.src = url; else preview.removeAttribute('src');
+            });
+        };
+        $('.modal-heading button', dialog).onclick = () => { resetPhotos(); dialog.close(); };
+        dialog.addEventListener('cancel', resetPhotos);
+        dialog.addEventListener('close', () => { if (!dialog.open) resetPhotos(); });
+        form.onsubmit = async (event) => { event.preventDefault(); if (submit.disabled) return; const data = Object.fromEntries(new FormData(form)); data.name = data.name.trim(); if (!data.name) {
             const input = $('[name=name]', dialog);
             input.setCustomValidity('Vui lòng nhập tên.');
             input.reportValidity();
             return;
-        } try {
-            if (await mutate('/api/profile', 'PUT', data)) notice('Đã cập nhật hồ sơ.');
+        } submit.disabled = true; $$('input,textarea', form).forEach(input => input.disabled = true); const sessionToken = token;
+        try {
+            for (const input of $$('[data-profile-image]', form)) {
+                if (!input.files[0]) continue;
+                const upload = new FormData(); upload.set('file', input.files[0]);
+                const result = await request('/api/v1/media', 'POST', upload);
+                if (sessionToken !== token || !form.isConnected) return;
+                images[input.dataset.profileImage + 'Url'] = result.url; input.value = '';
+            }
+            if (await mutate('/api/profile', 'PUT', {...data,...images})) { dialog.close(); notice('Đã cập nhật hồ sơ.'); }
+            else dialog.close();
         }
-        catch { } };
+        catch (error) { notice(error.message); }
+        finally { submit.disabled = false; $$('input,textarea', form).forEach(input => input.disabled = false); } };
         $('[name=name]', dialog).oninput = event => event.target.setCustomValidity('');
     }
     setupPosts();
@@ -343,7 +433,23 @@ catch { } const button = $('.theme-toggle'); if (button) {
     button.title = theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
     button.innerHTML = theme === 'dark' ? templates.sun : templates.moon;
 } }
-function setupPosts(root = document) { $$('.post', root).forEach(node => { const id = Number(node.dataset.id), post = state.feed.find(p => p.id === id); $$('.actions button', node).forEach(button => button.onclick = async () => { const action = button.dataset.action; if (['like', 'save', 'repost'].includes(action)) {
+function setupPosts(root = document) { $$('.post', root).forEach(node => { const id = Number(node.dataset.id), post = state.feed.find(p => p.id === id);
+    if (owns(post)) {
+        $('[data-edit-post]', node).onclick = () => { $('[popover]', node).hidePopover(); editPost(post); };
+        $('[data-delete-post]', node).onclick = async event => {
+            $('[popover]', node).hidePopover();
+            if (!confirm('Xóa bài đăng này? Bài sẽ không còn hiển thị trong bảng tin.')) return;
+            const button = event.currentTarget; button.disabled = true;
+            try {
+                const refreshed = await mutate(`/api/posts/${id}`, 'DELETE');
+                drafts.delete(id); replying.delete(id);
+                if (!refreshed) { state.feed = state.feed.filter(item => item.id !== id); render(); }
+                if (route().name === 'post') location.hash = 'home';
+                if (refreshed) notice('Đã xóa bài đăng.');
+            } catch { button.disabled = false; }
+        };
+    }
+    $$('.actions button', node).forEach(button => button.onclick = async () => { const action = button.dataset.action; if (['like', 'save', 'repost'].includes(action)) {
     fire(`/api/posts/${id}/actions/${action}`);
     return;
 } if (action === 'share') {
@@ -385,6 +491,7 @@ function setupPosts(root = document) { $$('.post', root).forEach(node => { const
     input.focus(); }); if (replying.has(id)) $('[data-action=reply]', node).click(); }); }
 function setupComposer(form) {
     if (!form) return;
+    $('.avatar', form).innerHTML = avatarContent(state.profile);
     const key = form.closest('dialog') ? 'modal' : 'home';
     const textarea = $('textarea', form), file = $('[type=file]', form), counter = $('small', form), submit = $('.post-button', form), emojiButton = $('[aria-label="Thêm biểu cảm"]', form);
     textarea.id = `${key}-draft`;
@@ -442,6 +549,25 @@ function setupComposer(form) {
     };
 }
 function compose() { if (!requireLogin()) return; const dialog = document.createElement('dialog'); dialog.className = cl('modal'); dialog.setAttribute('aria-labelledby', 'compose-title'); dialog.innerHTML = `<div class="${cl('modal-heading')}"><h2 id="compose-title">Một câu chuyện mới</h2><button class="${cl('icon-button')}" aria-label="Đóng bài đăng mới">×</button></div>${profileHTML(templates.composer)}<p class="${cl('demo-note')}">Bài đăng xuất hiện trong bảng tin.</p>`; $('#dialogs').replaceChildren(dialog); $('.modal-heading button', dialog).onclick = () => dialog.close(); setupComposer($('.composer', dialog)); dialog.showModal(); }
+function editPost(post) {
+    if (!owns(post)) return;
+    const dialog = document.createElement('dialog'); dialog.className = cl('modal'); dialog.setAttribute('aria-labelledby', 'edit-post-title');
+    dialog.innerHTML = `<div class="${cl('modal-heading')}"><h2 id="edit-post-title">Sửa bài đăng</h2><button type="button" class="${cl('icon-button')}" aria-label="Đóng sửa bài đăng">×</button></div><form class="${cl('profile-form')}"><label>Nội dung bài đăng<textarea autofocus name="copy" maxlength="280" rows="5">${escape(post.copy)}</textarea></label><small class="text-muted" role="status"></small><button class="${cl('post-button')}" type="submit">Lưu thay đổi</button></form>`;
+    $('#dialogs').replaceChildren(dialog); $('.modal-heading button', dialog).onclick = () => dialog.close();
+    const input = $('textarea', dialog), submit = $('[type=submit]', dialog), counter = $('small', dialog);
+    const update = () => { input.disabled = false; counter.textContent = `${input.value.length}/280`; submit.disabled = input.value.length > 280 || (!input.value.trim() && !post.image && !post.quote && !post.media); };
+    input.oninput = update; update();
+    $('form', dialog).onsubmit = async event => {
+        event.preventDefault(); if (submit.disabled) return; submit.disabled = input.disabled = true;
+        try {
+            const copy = input.value.trim(), refreshed = await mutate(`/api/posts/${post.id}`, 'PUT', {copy});
+            dialog.close();
+            if (!refreshed) { const current = state.feed.find(item => item.id === post.id); if (current) current.copy = copy; render(); }
+            if (refreshed) notice('Đã cập nhật bài đăng.');
+        } catch { update(); }
+    };
+    dialog.showModal();
+}
 function notificationsHTML() {
     const holder = document.createElement('template'); holder.innerHTML = templates.bell;
     const prototype = $('.notification', holder.content).cloneNode(true);
@@ -454,7 +580,7 @@ function notificationsHTML() {
         node.href = item.postId ? `#post/${item.postId}` : '#bell';
         node.classList.toggle('unread', !item.read);
         if (item.read) $('.live-dot', node)?.remove();
-        $('.avatar', node).outerHTML = avatar({ initial: item.name[0].toUpperCase(), tone: '' });
+        $('.avatar', node).outerHTML = avatar({ initial: item.name[0].toUpperCase(), tone: '', avatarUrl: item.avatarUrl });
         const verbs = {LIKE:'thích bài đăng của bạn.',REPOST:'đăng lại bài đăng của bạn.',COMMENT:'bình luận bài đăng của bạn.',MENTION:'nhắc đến bạn.',FOLLOW:'theo dõi bạn.'};
         $('p', node).innerHTML = `<strong>${escape(item.name)}</strong> ${escape(verbs[item.type] || 'gửi thông báo cho bạn.')}`;
         if (item.copy) $('blockquote', node).textContent = item.copy; else $('blockquote', node).remove();
@@ -473,17 +599,18 @@ function setupMail() {
         $$('.inbox-intro,.thread,.demo-note', main).filter(n => !n.closest('.conversation')).forEach(n => n.remove());
         $('.conversation-header button').onclick = () => { selected = null; render(); };
         const form = $('.message-form'), textarea = $('textarea', form), submit = $('button', form);
+        submit.disabled = pendingMessages.has(selected);
         textarea.value = drafts.get(selected) || '';
         textarea.oninput = () => drafts.set(selected, textarea.value);
-        form.onsubmit = async (event) => { event.preventDefault(); const handle = selected, copy = textarea.value.trim(); if (!copy || submit.disabled) return;
-            submit.disabled = true;
+        form.onsubmit = async (event) => { event.preventDefault(); const handle = selected, copy = textarea.value.trim(); if (!copy || pendingMessages.has(handle)) return;
+            pendingMessages.add(handle); submit.disabled = true;
             try {
                 await mutate(`/api/messages/${encodeURIComponent(handle)}`, 'POST', { copy });
-                drafts.delete(handle);
+                if (drafts.get(handle)?.trim() === copy) drafts.delete(handle);
                 render();
             }
             catch { }
-            finally { submit.disabled = false; } };
+            finally { pendingMessages.delete(handle); const current = $('.message-form button'); if (current) current.disabled = pendingMessages.has(selected); } };
         const log = $('.message-history');
         log.scrollTop = log.scrollHeight;
         return;
@@ -598,6 +725,7 @@ async function logout() { try {
     await saves;
     await request('/api/v1/auth/logout', 'POST');
     token = '';
+    connectChat();
     drafts.clear(); imageDrafts.clear(); replying.clear(); selected = null;
     try {
         sessionStorage.removeItem('postr-token');

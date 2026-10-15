@@ -411,6 +411,9 @@ user: `
 </button>
 </div>
 <form class="profile-form grid gap-[20px] p-[24px] [&amp;_label]:grid [&amp;_label]:gap-[8px] [&amp;_label]:text-[12px] [&amp;_label]:font-bold [&amp;_input]:p-[12px] [&amp;_input]:[border:1px_solid_var(--color-line)] [&amp;_input]:rounded-[9px] [&amp;_input]:bg-paper [&amp;_input]:text-[14px] [&amp;_textarea]:p-[12px] [&amp;_textarea]:[border:1px_solid_var(--color-line)] [&amp;_textarea]:rounded-[9px] [&amp;_textarea]:bg-paper [&amp;_textarea]:text-[14px] [&amp;_.post-button]:w-fit max-[600px]:[&amp;_input]:text-[16px] max-[600px]:[&amp;_textarea]:text-[16px]">
+<label>Ảnh đại diện<img data-image-preview="avatar" class="profile-image-preview profile-avatar-preview" alt="Ảnh đại diện đã chọn" hidden><input type="file" data-profile-image="avatar" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+<label>Ảnh bìa<img data-image-preview="banner" class="profile-image-preview" alt="Ảnh bìa đã chọn" hidden><input type="file" data-profile-image="banner" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+<p class="profile-image-help">Chọn JPG, PNG, WebP hoặc GIF, mỗi ảnh tối đa 5 MB.</p>
 <label>Tên hiển thị<input class="[font-family:inherit]" required="" maxLength="50" name="name" value="__NAME__"/>
 </label>
 <label>Giới thiệu<textarea class="w-full min-h-[66px] resize-y border-0 bg-transparent text-[16px] leading-[1.6] placeholder:text-[light-dark(#8b8780,#a99f92)] [font-family:inherit]" name="bio" maxLength="160">__BIO__</textarea>
