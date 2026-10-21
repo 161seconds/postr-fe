@@ -10,6 +10,16 @@ Giao diện dùng HTML, CSS và JavaScript thuần. Flask trong `../postr-be` ph
 
 Khởi động backend theo README trong `../postr-be`, rồi mở URL Flask. Khách đọc bảng tin, tìm kiếm và xem bình luận mà không cần đăng nhập. Đăng nhập để đăng bài, tương tác, theo dõi, xem dữ liệu cá nhân hoặc nhắn tin. Các trang `/admin` và `/admin/posts` chỉ cho tài khoản `ADMIN`: thống kê, tìm kiếm, phân trang và ẩn/khôi phục gọi API thật; trạng thái giữ qua tải lại trang. Tài khoản thường không thấy link quản trị.
 
+## Triển khai Vercel
+
+Kết nối repo `postr-fe`, đặt **Framework Preset** là **Other**, để trống **Root Directory**. `vercel.json` đặt **Output Directory** là `.` và bỏ bước build vì `index.html`, JavaScript, CSS nằm ở gốc repo. Nếu để Vercel tự chọn `public`, trang chủ sẽ trả 404.
+
+API `/api/*`, gồm ảnh upload, được proxy tới `https://postr-be.onrender.com`; phản hồi API không được cache. Font, ảnh tĩnh và favicon được rewrite tới `public`. Các trang quản trị dùng chung `index.html`. WebSocket trên host `*.vercel.app` kết nối trực tiếp tới Render; local vẫn kết nối tới Flask cùng nguồn.
+
+Trong Render Environment, đặt `POSTR_FRONTEND_ORIGIN=https://postr-fe.vercel.app` để backend chấp nhận thao tác ghi từ frontend. Sau deploy, kiểm tra `/`, `/api/state` và `/check.html`. Frontend tĩnh không đọc `.env` lúc chạy; `POSTR_API_URL` từ bản Next.js cũ không còn tác dụng.
+
+## Kiểm tra và dữ liệu
+
 Mở `/?check` để chạy kiểm tra JavaScript trong trình duyệt. Console phải có `Frontend checks passed`. Kiểm tra bao gồm tìm hộp thư không dấu, escape HTML và template không cần framework. Tìm bài viết, tác giả, trích dẫn và chủ đề được kiểm tra ở backend trong `tests_ui.py`.
 
 Mở `/check.html` để kiểm tra màu/font, responsive, draft, biểu cảm, thông báo/hội thoại, escape HTML và tách dữ liệu giữa các tài khoản. Mở `/check.html?guest` để kiểm tra đọc bài không đăng nhập, thao tác được bảo vệ, căn giữa dialog và token hết hạn. Mở `/check.html?pagination` để kiểm tra cuộn tự tải đủ 100 bài, giữ vị trí cuộn và draft, dừng khi hết bài, thử lại sau lỗi mạng, tương tác, tìm kiếm, bộ lọc, liên kết bài và phản hồi đến muộn. Mở `/check.html?admin` để kiểm tra kiểm duyệt, bộ lọc, validation và đăng xuất. Các trang kiểm tra dùng fixture riêng trong bộ nhớ, không ghi dữ liệu backend.

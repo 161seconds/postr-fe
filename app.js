@@ -143,7 +143,9 @@ function connectChat() {
     chatSocket = null; chatToken = token;
     if (!token || !state?.profile) return;
     const sessionToken = token;
-    const url = new URL('/hubs/chat', location.href); url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('access_token', sessionToken);
+    // shortcut: Vercel hosts connect directly to Render; configure this origin when adding a custom frontend domain.
+    const url = new URL('/hubs/chat', location.hostname.endsWith('.vercel.app') ? 'https://postr-be.onrender.com' : location.href);
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('access_token', sessionToken);
     const socket = chatSocket = new WebSocket(url);
     socket.onopen = () => socket.send(JSON.stringify({protocol:'json',version:1}) + '\x1e');
     socket.onmessage = event => {

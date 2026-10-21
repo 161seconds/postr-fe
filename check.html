@@ -246,7 +246,10 @@
         assert($('.post') && !$('.composer') && !$('.conversation') && !$('#dialogs dialog'), 'Expired token did not return to public feed');
         $('#check-result').textContent = 'PASS: public feed/search/comments, guarded actions, password visibility/confirmation, centered dialogs, private data, expired token.';
       } else {
-        await wait(() => $('.post'));
+        await wait(() => $('.post') && sockets.length);
+        const chat = new URL(sockets[0].url);
+        assert(chat.pathname === '/hubs/chat' && chat.searchParams.get('access_token') === 'check-admin-token', 'Chat URL lost its path or authentication');
+        assert(chat.origin === (location.hostname.endsWith('.vercel.app') ? 'wss://postr-be.onrender.com' : location.origin.replace(/^http/, 'ws')), 'Chat connected to the wrong host');
         await document.fonts.ready;
         assert(document.documentElement.scrollWidth <= innerWidth, 'Layout overflows viewport');
         const checkTheme = (paper, ink, card) => {
